@@ -12,7 +12,9 @@ using namespace params;
 
 namespace {
   // Context threaded through the phi/x double integral's GSL callbacks
-  // (integrand_phi sets phi; integrand_x reads everything).
+  // (integrand_phi sets phi; integrand_x reads everything). `term`
+  // selects the branch integrand_x() takes -- see NLOCoefficients::Term
+  // in nlo_coefficients.hpp for what each one computes.
   struct IntegrandContext{
     NLOCoefficients *self;
     const RunParameters *rp;
@@ -20,7 +22,7 @@ namespace {
     double r;
     double xi;
     double phi;
-    double flag;
+    NLOCoefficients::Term term;
   };
 }
 
@@ -46,15 +48,13 @@ double NLOCoefficients::integrand_x(double lnx, void *userdata){
   double r=ctx.r;
   double xi=ctx.xi;
   double phi=ctx.phi;
-  double flag=ctx.flag;
-  // flag=1: J, flag=-1: Jv, flag=-2: Jv2, flag=0: J-Jv(xi=1), flag=2: I2,
-  // flag=3: K1/4 (the K1 wrapper multiplies by 4, see below), flag=4: H2,
-  // flag=5: H3, flag=6: H4, flag=7: K2/4 (K2 wrapper multiplies by 4)
+  Term term=ctx.term;
 
   double x=exp(lnx), x2=Sq(x), r2=Sq(r), sprx=r*x*cos(phi), rpx2=r2+x2+2*sprx, rmx2=r2+x2-2*sprx;
 
   double res;
-  if(flag>6.5){
+  switch(term){
+  case Term::K2: {
     // K2/4 -- the K2() wrapper multiplies this by 4 to match Eq. (12f) exactly
     double dip1 = sqrt(r2 + Sq(1-xi)*x2 + 2*(1-xi)*sprx);
     double K = (x2+sprx)/(x2*rpx2);
@@ -68,8 +68,9 @@ double NLOCoefficients::integrand_x(double lnx, void *userdata){
     else if(rp.alpha_s_running==PARENT){
       res *= alpha_s_pos(r);
     }
+    break;
   }
-  else if(flag>5.5){
+  case Term::H4: {
     // H4, Eq. (12d)
     double dip1 = sqrt(r2 + Sq(xi)*x2 - 2*xi*sprx);
     double dip2 = sqrt(r2 + Sq(1-xi)*x2 + 2*(1-xi)*sprx);
@@ -77,8 +78,9 @@ double NLOCoefficients::integrand_x(double lnx, void *userdata){
     if(rp.alpha_s_running==DAUGHTER){
       res*=alpha_s_pos(x);
     }
+    break;
   }
-  else if(flag>4.5){
+  case Term::H3: {
     // H3
     double dip1 = sqrt(r2 + Sq(xi)*x2 + 2*xi*sprx);
     double dip2 = sqrt(r2 + Sq(1-xi)*x2 - 2*(1-xi)*sprx);
@@ -87,8 +89,9 @@ double NLOCoefficients::integrand_x(double lnx, void *userdata){
     if(rp.alpha_s_running==DAUGHTER){
       res*=alpha_s_pos(x);
     }
+    break;
   }
-  else if(flag>3.5){
+  case Term::H2: {
     // H2
     double dip1 = sqrt(Sq(xi)*rpx2);
     double dip2 = sqrt(Sq(xi)*r2 + Sq(1-xi)*x2 - 2*xi*(1-xi)*sprx);
@@ -103,8 +106,9 @@ double NLOCoefficients::integrand_x(double lnx, void *userdata){
     else if(rp.alpha_s_running==MIXED){
         res *= alpha_s_pos(min(xi*x, xi*sqrt(rpx2)));
     }
+    break;
   }
-  else if(flag>2.5){
+  case Term::K1: {
     // K1/4 -- the K1() wrapper multiplies this by 4 to match Eq. (12e) exactly
     double dip1 = sqrt(Sq(xi)*r2+Sq(1-xi)*x2-2*xi*(1-xi)*sprx);
     double K = (x2+sprx)/(x2*rpx2);
@@ -117,8 +121,9 @@ double NLOCoefficients::integrand_x(double lnx, void *userdata){
       res*=alpha_s_pos(x);
     }
       */
+    break;
   }
-  else if(flag>1.5){
+  case Term::I2: {
     // I2
     double dip1=sqrt(Sq(xi)*r2+Sq(1-xi)*x2-2*xi*(1-xi)*sprx);
     double dip2=sqrt(rpx2);
@@ -130,8 +135,9 @@ double NLOCoefficients::integrand_x(double lnx, void *userdata){
     else if(rp.alpha_s_running==DAUGHTER || rp.alpha_s_running==SMALLEST){
       res*=alpha_s_pos(dip2);
     }
-
-  }else if(flag>0.5){
+    break;
+  }
+  case Term::J: {
     // J
     double dip1=sqrt(r2+Sq(1-xi)*x2+2*(1-xi)*sprx);
     double dip2=xi*x;
@@ -155,8 +161,9 @@ double NLOCoefficients::integrand_x(double lnx, void *userdata){
     else{
       res=exp(2*lnx)*K*(sr1d(dip1)-sr1d(dip2)*sr1d(dip3));
     }
-
-  }else if(flag>-0.5){
+    break;
+  }
+  case Term::JJv_xi1: {
     // J-Jv(xi=1)
     double K;
     if(x<sr1d.min_r()/10 || sqrt(rpx2)<sr1d.min_r()/10){
@@ -168,7 +175,9 @@ double NLOCoefficients::integrand_x(double lnx, void *userdata){
     if(rp.alpha_s_running==DAUGHTER){
       res*=alpha_s_pos(x);
     }
-  }else if(flag>-1.5){
+    break;
+  }
+  case Term::Jv: {
     // Jv, now include Jv2 stuffs already
     double dip1=sqrt(r2+Sq(1-xi)*x2-2*(1-xi)*sprx);
     double dip2=x;
@@ -198,39 +207,38 @@ double NLOCoefficients::integrand_x(double lnx, void *userdata){
     else{
       res = exp(2*lnx)*K*(sr1d(dip1) - sr1d(dip2)*sr1d(dip3));
     }
-
-  }else{
-      // Jv2
-      double dip1=sqrt(r2+Sq(1-xi)*x2-2*(1-xi)*sprx);
-      double dip2=x;
-      double dip3=sqrt(Sq(xi)*x2+r2+2*xi*sprx);
-      double K=1/x2;
-      if(rp.alpha_s_running==PARENT){
-        // take 1
-        res=-exp(2*lnx)*K*alpha_s_pos(r)*sr1d(dip2)*sr1d(dip3);
-        // take 2
-        //res=-exp(2*lnx)*K*alpha_s_pos(r)*sr1d(dip2)*sr1d(dip3);
-      }
-      else if(rp.alpha_s_running==DAUGHTER){
-        res=-exp(2*lnx)*K*alpha_s_pos(x)*sr1d(dip2)*sr1d(dip3);
-      }
-      else if(rp.alpha_s_running==SMALLEST){
-        // take 1
-        res=-exp(2*lnx)*K*alpha_s_pos(min(r, min(xi*x, dip3)))*sr1d(dip2)*sr1d(dip3);
-        // take 2
-        //res=-exp(2*lnx)*K*alpha_s_pos(min(r, min(xi*x, dip3)))*sr1d(dip2)*sr1d(dip3);
-      }
-      else if(rp.alpha_s_running==MIXED){
-        res=-exp(2*lnx)*K*alpha_s_pos(min(xi*x, dip3))*sr1d(dip2)*sr1d(dip3);
-      }
-      else{
-          res=-exp(2*lnx)*K*sr1d(dip2)*sr1d(dip3);
-      }
-
+    break;
+  }
+  case Term::Jv2: {
+    // Jv2
+    double dip1=sqrt(r2+Sq(1-xi)*x2-2*(1-xi)*sprx);
+    double dip2=x;
+    double dip3=sqrt(Sq(xi)*x2+r2+2*xi*sprx);
+    double K=1/x2;
+    if(rp.alpha_s_running==PARENT){
+      // take 1
+      res=-exp(2*lnx)*K*alpha_s_pos(r)*sr1d(dip2)*sr1d(dip3);
+      // take 2
+      //res=-exp(2*lnx)*K*alpha_s_pos(r)*sr1d(dip2)*sr1d(dip3);
     }
-  //if(alpha_s_running==DAUGHTER){
-  //  res*=alpha_s_pos(x);
-  //}
+    else if(rp.alpha_s_running==DAUGHTER){
+      res=-exp(2*lnx)*K*alpha_s_pos(x)*sr1d(dip2)*sr1d(dip3);
+    }
+    else if(rp.alpha_s_running==SMALLEST){
+      // take 1
+      res=-exp(2*lnx)*K*alpha_s_pos(min(r, min(xi*x, dip3)))*sr1d(dip2)*sr1d(dip3);
+      // take 2
+      //res=-exp(2*lnx)*K*alpha_s_pos(min(r, min(xi*x, dip3)))*sr1d(dip2)*sr1d(dip3);
+    }
+    else if(rp.alpha_s_running==MIXED){
+      res=-exp(2*lnx)*K*alpha_s_pos(min(xi*x, dip3))*sr1d(dip2)*sr1d(dip3);
+    }
+    else{
+        res=-exp(2*lnx)*K*sr1d(dip2)*sr1d(dip3);
+    }
+    break;
+  }
+  }
   if(gsl_finite(res)==1){
     return res;
   }else{
@@ -254,8 +262,8 @@ double NLOCoefficients::integrand_phi(double phi, void *userdata){
 
 
 double NLOCoefficients::func(const RunParameters& rp, const DipoleAmplitude1DSlice& sr1d,
-                              double r, double xi, double flag){
-  IntegrandContext ctx{this, &rp, &sr1d, r, xi, 0.0, flag};
+                              double r, double xi, Term term){
+  IntegrandContext ctx{this, &rp, &sr1d, r, xi, 0.0, term};
   double result, error;
   gsl_function F;
   F.function=&NLOCoefficients::integrand_phi;
@@ -267,50 +275,50 @@ double NLOCoefficients::func(const RunParameters& rp, const DipoleAmplitude1DSli
 
 
 double NLOCoefficients::I2(const RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi){
-  return func(rp,sr1d,r,xi,2);
+  return func(rp,sr1d,r,xi,Term::I2);
 }
 
 
 double NLOCoefficients::J(const RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi){
-  return 2*func(rp,sr1d,r,xi,1);
+  return 2*func(rp,sr1d,r,xi,Term::J);
 }
 
 
 double NLOCoefficients::K1(const RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi){
-  return 4*func(rp,sr1d,r,xi,3);
+  return 4*func(rp,sr1d,r,xi,Term::K1);
 }
 
 
 double NLOCoefficients::H2(const RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi){
-  return func(rp,sr1d,r,xi,4);
+  return func(rp,sr1d,r,xi,Term::H2);
 }
 
 
 double NLOCoefficients::H3(const RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi){
-  return func(rp,sr1d,r,xi,5);
+  return func(rp,sr1d,r,xi,Term::H3);
 }
 
 
 double NLOCoefficients::H4(const RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi){
-  return func(rp,sr1d,r,xi,6);
+  return func(rp,sr1d,r,xi,Term::H4);
 }
 
 
 double NLOCoefficients::K2(const RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi){
-  return 4*func(rp,sr1d,r,xi,7);
+  return 4*func(rp,sr1d,r,xi,Term::K2);
 }
 
 
 double NLOCoefficients::Jv(const RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi){
-  return 2*func(rp,sr1d,r,xi,-1);
+  return 2*func(rp,sr1d,r,xi,Term::Jv);
 }
 
 
 double NLOCoefficients::Jv2(const RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi){
-  return 2*func(rp,sr1d,r,xi,-2);
+  return 2*func(rp,sr1d,r,xi,Term::Jv2);
 }
 
 
 double NLOCoefficients::JJv_xi1(const RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r){
-  return func(rp,sr1d,r,1,0);
+  return func(rp,sr1d,r,1,Term::JJv_xi1);
 }

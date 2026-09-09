@@ -10,7 +10,7 @@
 // that require a two-dimensional transverse integral (over the emitted
 // parton's momentum x_perp and the angle phi between x_perp and r_perp) --
 // see nlo_coefficients.cpp for the shared x,phi double integral and the
-// channel-specific integrand each one selects via an internal flag.
+// channel-specific integrand each one selects via the Term enum below.
 // (I1 and H1, Eqs. (10c)/(12a), need no such integral -- they're plain
 // algebraic functions of S(r,Y), and live as free functions in
 // point_tables.cpp instead.)
@@ -39,6 +39,12 @@
 // allocated its workspaces).
 class NLOCoefficients{
 public:
+  // Which term func()'s shared phi/x double integral evaluates -- see
+  // nlo_coefficients.cpp for what each one computes. Exposed here only
+  // because func()'s declaration below needs the type; nothing outside
+  // this class and nlo_coefficients.cpp should need to name it.
+  enum class Term{ Jv2 = -2, Jv = -1, JJv_xi1 = 0, J = 1, I2 = 2, K1 = 3, H2 = 4, H3 = 5, H4 = 6, K2 = 7 };
+
   explicit NLOCoefficients(const DipoleAmplitude& dipole);
   ~NLOCoefficients();
   NLOCoefficients(const NLOCoefficients&) = delete;
@@ -71,7 +77,7 @@ private:
   gsl_integration_workspace *w_x_, *w_phi_;
 
   double func(const params::RunParameters& rp, const DipoleAmplitude1DSlice& sr1d,
-              double r, double xi, double flag);
+              double r, double xi, Term term);
 
   static double integrand_x(double lnx, void *userdata);
   static double integrand_phi(double phi, void *userdata);
