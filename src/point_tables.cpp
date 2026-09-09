@@ -15,10 +15,12 @@ using namespace std;
 using namespace params;
 
 namespace {
-  // I1/H1: the CF-channel real/virtual building blocks shared by several
-  // of integrand_xi's channels (arXiv:2310.06640 sec. 3). Local to the
-  // xi-convolution -- nothing outside build_xi_convolution()/integrand_xi
-  // needs them.
+  // I1 (Eq. 10c) and H1 (Eq. 12a): unlike the rest of the coefficient
+  // functions (nlo_coefficients.hpp), these need no transverse integral --
+  // they're plain algebra in S(r,Y), so they don't need NLOCoefficients'
+  // GSL workspaces and live here as free functions instead. Same symbols
+  // as the paper. Local to the xi-convolution -- nothing outside
+  // build_xi_convolution()/integrand_xi needs them.
   double I1(const RunParameters& rp, const DipoleAmplitude& dipole, double r, double y){
     double res=(dipole.S(r,y)*(2*log(c0/r)-log(rp.mu2)))/(2*M_PI);
     if(rp.alpha_s_running==PARENT || rp.alpha_s_running==DAUGHTER || rp.alpha_s_running==SMALLEST){
@@ -162,6 +164,9 @@ double PointTables::integrand_xi(double xi, void *userdata){
   double xg_xi1=pdf.xf(rp,xp,rp.mu2);
   //
   double res=0;
+  // qq channel, Eq. (9): the with_CF block is the I1/I2 (C_F-scaling) part
+  // and with_Nc below is the J/Jv (N_c-scaling) part of the same equation
+  // -- the large-Nc decomposition splits Eq. (9) across the two.
   if(rp.with_CF){
     double real_CF=0;
     double virt_CF=-M_1_PI*(2*log(k) - log(rp.mu2) + 2*log(1-xi))*dipole.S(r,y);
@@ -179,11 +184,14 @@ double PointTables::integrand_xi(double xi, void *userdata){
     res+=(CF*(1+xi2)*(real_CF*xq_xi+virt_CF*xq_xi1))/(1-xi);
   }
   if(rp.with_Nc){
+    // qq channel, Eq. (9) -- N_c-scaling part; see with_CF above.
     double real_Nc=(xi>xp ? tables.J(r,y) : 0);
     double virt_Nc=-tables.Jv(r,y);
     double resNc=real_Nc*xq_xi+virt_Nc*xq_xi1;
     res+=(Nc*(1+xi2)*resNc)/(1-xi);
   }
+  // qg channel, Eq. (11b) (note: tables.J1 here is (1/4) x the paper's K1,
+  // Eq. 12e -- see nlo_coefficients.hpp).
   if(rp.with_gl){
     double resgl1 = (xi>xp ? 0.25*H1(rp,dipole,r,y) + 0.5*I1(rp,dipole,xi*r,y) : 0);
     double resgl2 = (xi>xp ? -tables.J1(r,y) : 0);
@@ -196,6 +204,8 @@ double PointTables::integrand_xi(double xi, void *userdata){
     }
     res += ((resgl1+resgl2)*Nc*xq_xi*(1+Sq(1-xi)))/xi;
 }
+  // gq channel, Eq. (11c) (note: tables.K3 here is (1/4) x the paper's K2,
+  // Eq. 12f -- see nlo_coefficients.hpp).
   if(rp.with_gq){
     double resgq1 = (xi>xp ? 0.25*H1(rp,dipole,xi*r,y) + 0.5*I1(rp,dipole,r,y) : 0);
     double resgq2 = (xi>xp ? - tables.K3(r,y) : 0);
@@ -209,6 +219,10 @@ double PointTables::integrand_xi(double xi, void *userdata){
     //resgq *= Nf;               // Multiply by Nf to normalize. Technically, no multiplication but sum over flavors with fragmentation fn.
     res += (resgq*xg_xi*(Sq(xi)+Sq(1-xi)));
   }
+  // gg channel, Eq. (11a). gg2/gg3 are the two square-bracket terms after
+  // the [H1+H1-H2] one; gg3 (Nf-weighted below) is the term built from
+  // tables.H5, which is the paper's H4 (Eq. 12d), not H5 -- see
+  // nlo_coefficients.hpp.
   if(rp.with_gg){
     double gg11 = (xi>xp ? H1(rp,dipole,r,y) + H1(rp,dipole,xi*r,y) : 0);
     double gg12 = (xi>xp ? - tables.H2(r,y) : 0);
@@ -229,6 +243,8 @@ double PointTables::integrand_xi(double xi, void *userdata){
     double resgg = (Nc*xg_xi*(gg11+gg12)*Sq(1-(xi*(1-xi)))/(xi*(1-xi))) + (Nc*xg_xi1*gg2*((2*xi/(1-xi))+(xi*(1-xi))))  + (Nf*xg_xi1*gg3*(Sq(xi)+Sq(1-xi)));
     res += resgg;
   }
+  // Never taken: params::with_xi1 is a compile-time false. See
+  // nlo_coefficients.hpp for the (unverified) provenance of this term.
   if(with_xi1){
     double sub=Nc*2*tables.JJv_xi1(r,y)*xq_xi1 / (1-xi);
     if(rp.alpha_s_running==PARENT) sub*=alpha_s_pos(r);

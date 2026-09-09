@@ -5,10 +5,11 @@
 
 #include <vector>
 
-// The BK-evolved dipole amplitude S(r,Y) (arXiv:2310.06640 sec. 2): reads
-// the BK-solution grid selected by rp.col/rp.b (params::bksolpp/bksolpA)
-// and bicubic-interpolates it over (r,Y). Built once per run in main(),
-// after the command line has been parsed into a RunParameters.
+// The BK-evolved dipole amplitude S(r,Y) (arXiv:2310.06640 sec. III):
+// reads the BK-solution grid selected by rp.col/rp.b
+// (params::bksolpp/bksolpA) and bicubic-interpolates it over (r,Y). Built
+// once per run in main(), after the command line has been parsed into a
+// RunParameters.
 class DipoleAmplitude{
 public:
   explicit DipoleAmplitude(const params::RunParameters& rp);
@@ -50,8 +51,11 @@ private:
                   std::vector<double>& yvals_tmp);
 };
 
-// Analytic (GBW-like) initial-condition dipole amplitude S(r) at the BK
-// evolution starting rapidity, used directly by the NLO cross section
-// (sigma_NLO.cpp) rather than through the interpolated DipoleAmplitude
-// grid -- a pure function of rp, so it needs no DipoleAmplitude instance.
+// Analytic (McLerran-Venugopalan/GBW-like) initial-condition dipole
+// amplitude S(r) at the BK evolution starting rapidity X0: the
+// dipole-proton amplitude of Eq. (13), or its dipole-nucleus generalization
+// via the optical Glauber model, Eq. (14) (rp.col=="pA"; rp.TA is T_A(b)
+// from Eq. 14). Used directly by the NLO cross section (sigma_NLO.cpp)
+// rather than through the interpolated DipoleAmplitude grid -- a pure
+// function of rp, so it needs no DipoleAmplitude instance.
 double Sr_0(const params::RunParameters& rp, double r);

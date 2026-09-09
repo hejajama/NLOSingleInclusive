@@ -11,9 +11,18 @@ class PdfSet;   // pdf_set.hpp -- only used by reference here
 
 // Everything that depends on a single kinematic point (xp, xg, k): bicubic
 // (r,Y) interpolations of the ten NLO coefficient functions
-// (nlo_coefficients.hpp), their xi-convolution with the PDF at this point
-// (arXiv:2310.06640 sec. 3), and the fixed-Y dipole-amplitude slice used by
-// the LO cross section (sigma_LO.cpp).
+// (nlo_coefficients.hpp -- see that header for the paper-symbol mapping,
+// which is not 1:1), their xi-convolution with the PDF at this point, and
+// the fixed-Y dipole-amplitude slice used by the LO cross section
+// (sigma_LO.cpp).
+//
+// xi_convolution(r) is the parton-level NLO correction to the cross
+// section at fixed r: the dxi integral in arXiv:2310.06640 Eqs. (9)
+// (qq channel) and (11a-11c) (gg/qg/gq channels), sec. II -- see
+// integrand_xi() in point_tables.cpp for the channel-by-channel
+// breakdown (params::RunParameters::with_CF/with_Nc select Eq. (9),
+// with_gg selects Eq. (11a), with_gl selects Eq. (11b), with_gq selects
+// Eq. (11c)).
 //
 // Built once per (z,k) point in main()'s loop; replaces the old
 // init_interp()/clear_interp() free-function pair with a

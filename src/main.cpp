@@ -16,6 +16,14 @@
 using namespace std;
 using namespace params;
 
+// CLI: zmin zmax zstep col b incoming outgoing rc p muratio
+//
+// Scans the parton-level LO+NLO single-inclusive cross section
+// (arXiv:2310.06640 sec. IV) over z = p/k (p is the fixed CLI argument;
+// k is the parton transverse momentum, p = z*k per the paragraph after
+// Eq. 7). No fragmentation-function convolution to the hadron level
+// (sec. V) is performed -- z is swept directly rather than integrated
+// over, so this always reports parton-level results at k = p/z.
 int main(int argc, char* argv[]){
 
     double zmin = std::stod(argv[1]);
@@ -43,8 +51,8 @@ int main(int argc, char* argv[]){
     while(z >= zmin - 0.00001){
 
       k = p/z;
-      double xp=(k/SQRTS)*exp(yh);
-      double xg=(k/SQRTS)*exp(-yh);
+      double xp=(k/SQRTS)*exp(yh);   // Eq. 6
+      double xg=(k/SQRTS)*exp(-yh);  // Eq. 5 (Xg in the paper's notation)
       PointTables tables(rp, pdf, dipole, xp, xg, k);
       cout << z << "," << k << "," << sigma_LO_k(rp,pdf,tables,k,xp) << "," << sigma_NLO_k(rp,pdf,tables,k,xp) << endl;
       z-=zstep;
