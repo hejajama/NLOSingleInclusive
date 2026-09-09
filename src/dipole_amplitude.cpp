@@ -61,14 +61,14 @@ void DipoleAmplitude::load_grid(const RunParameters& rp,
   string bksol;
   if(rp.col.compare("pA") == 0){
     if(rp.b < 10){
-      bksol = bksolpA + to_string(rp.b).substr(0,1);
+      bksol = rp.bk_nucleus_prefix + to_string(rp.b).substr(0,1);
     }
     else{
-      bksol = bksolpA + to_string(rp.b).substr(0,2);
+      bksol = rp.bk_nucleus_prefix + to_string(rp.b).substr(0,2);
     }
   }
   else{
-    bksol = bksolpp;
+    bksol = rp.bk_proton_file;
   }
 
   ifstream datafile(bksol.c_str());

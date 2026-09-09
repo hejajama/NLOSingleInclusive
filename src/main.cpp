@@ -1,3 +1,4 @@
+#include "cli.hpp"
 #include "common.hpp"
 #include "dipole_amplitude.hpp"
 #include "params.hpp"
@@ -16,7 +17,11 @@
 using namespace std;
 using namespace params;
 
-// CLI: zmin zmax zstep col b incoming outgoing rc p muratio
+// CLI: see cli.hpp. Named flags (--zmin --zmax --zstep --col --b --incoming
+// --outgoing --rc --p --muratio, plus optional --sqrts/--y/--bk-proton/
+// --bk-nucleus) are preferred; the original positional form (zmin zmax
+// zstep col b incoming outgoing rc p muratio) is still accepted for
+// backward compatibility.
 //
 // Scans the parton-level LO+NLO single-inclusive cross section
 // (arXiv:2310.06640 sec. IV) over z = p/k (p is the fixed CLI argument;
@@ -26,36 +31,29 @@ using namespace params;
 // over, so this always reports parton-level results at k = p/z.
 int main(int argc, char* argv[]){
 
-    double zmin = std::stod(argv[1]);
-    double zmax = std::stod(argv[2]);
-    double zstep = std::stod(argv[3]);
-    string col = argv[4];
-    double b = std::stod(argv[5]);
-    string incoming = argv[6];
-    string outgoing = argv[7];
-    string rc = argv[8];
-    double p = std::stod(argv[9]);
-    double muratio = std::stod(argv[10]);
-    double mu2 = Sq(muratio*p);
-    running_types alpha_s_running = parse_alpha_s_running(rc);
+    const cli::Args args = cli::parse(argc, argv);
 
-    const RunParameters rp = make_run_parameters(col, b, p, incoming, outgoing,
-                                                  alpha_s_running, mu2);
+    double mu2 = Sq(args.muratio*args.p);
+    running_types alpha_s_running = parse_alpha_s_running(args.rc);
+
+    const RunParameters rp = make_run_parameters(args.col, args.b, args.p, args.incoming, args.outgoing,
+                                                  alpha_s_running, mu2,
+                                                  args.bk_proton, args.bk_nucleus);
 
     PdfSet pdf(pdfname);
     DipoleAmplitude dipole(rp);
     gsl_set_error_handler(&gsl_error_handler);
 
-    double z = zmax;
-    double k = p/zmax;
-    while(z >= zmin - 0.00001){
+    double z = args.zmax;
+    double k = args.p/args.zmax;
+    while(z >= args.zmin - 0.00001){
 
-      k = p/z;
-      double xp=(k/SQRTS)*exp(yh);   // Eq. 6
-      double xg=(k/SQRTS)*exp(-yh);  // Eq. 5 (Xg in the paper's notation)
+      k = args.p/z;
+      double xp=(k/args.sqrts)*exp(args.y);   // Eq. 6
+      double xg=(k/args.sqrts)*exp(-args.y);  // Eq. 5 (Xg in the paper's notation)
       PointTables tables(rp, pdf, dipole, xp, xg, k);
       cout << z << "," << k << "," << sigma_LO_k(rp,pdf,tables,k,xp) << "," << sigma_NLO_k(rp,pdf,tables,k,xp) << endl;
-      z-=zstep;
+      z-=args.zstep;
    }
 
     return 0;

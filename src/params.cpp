@@ -76,7 +76,8 @@ static void validate_alpha_s_running(const RunParameters& rp){
 
 RunParameters make_run_parameters(string col, double b, double p,
                                    string incoming, string outgoing,
-                                   running_types alpha_s_running, double mu2){
+                                   running_types alpha_s_running, double mu2,
+                                   const string& bk_proton, const string& bk_nucleus){
   RunParameters rp;
   rp.col = col;
   rp.b = b;
@@ -86,6 +87,8 @@ RunParameters make_run_parameters(string col, double b, double p,
   rp.alpha_s_running = alpha_s_running;
   rp.mu2 = mu2;
   rp.TA = lookup_TA(b);
+  rp.bk_proton_file = bk_proton.empty() ? bksolpp : bk_proton;
+  rp.bk_nucleus_prefix = bk_nucleus.empty() ? bksolpA : bk_nucleus;
 
   if(incoming.compare("g") == 0){
     rp.channel = (outgoing.compare("g") == 0) ? Channel::GG : Channel::GQ;

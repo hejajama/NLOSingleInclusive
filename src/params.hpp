@@ -39,7 +39,7 @@ namespace params{
 
   // KCBK fit3 solution
   inline const std::string bksolpp = "./KCBK_fit_3/proton.dat";
-  inline const std::string bksolpA = "./KCBK_fit_3/proton.dat"; //"./KCBK_fit_3/Pb_b_";
+  inline const std::string bksolpA = "./KCBK_fit_3/Pb_b_";
 
   // KCBK bal+sd solution
   //inline const std::string bksolpp = "./KCBK_fit_5/proton.dat";
@@ -139,6 +139,8 @@ namespace params{
     double mu2;
     double TA;              // params::TAfile row matching b
     Channel channel;
+    std::string bk_proton_file;    // BK solution file for col=="pp" (params::bksolpp unless overridden on the CLI)
+    std::string bk_nucleus_prefix; // BK solution filename *prefix* for col=="pA" (params::bksolpA unless overridden); load_grid() appends the digits of b directly, so a prefix meant to look like "..._<b>" must already end in "_"
   };
 
   // Looks up TA for the given impact parameter b in params::TAfile.
@@ -152,7 +154,12 @@ namespace params{
 
   // Builds a RunParameters from the already-parsed CLI fields: looks up TA
   // via lookup_TA(b), and derives channel from incoming/outgoing.
+  // bk_proton/bk_nucleus override params::bksolpp/params::bksolpA for this
+  // run when non-empty (see --bk-proton/--bk-nucleus in cli.hpp); an empty
+  // string (the default) keeps the compiled-in params.hpp value.
   RunParameters make_run_parameters(std::string col, double b, double p,
                                      std::string incoming, std::string outgoing,
-                                     running_types alpha_s_running, double mu2);
+                                     running_types alpha_s_running, double mu2,
+                                     const std::string& bk_proton = "",
+                                     const std::string& bk_nucleus = "");
 }

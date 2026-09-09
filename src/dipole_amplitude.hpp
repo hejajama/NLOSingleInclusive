@@ -7,9 +7,10 @@
 
 // The BK-evolved dipole amplitude S(r,Y) (arXiv:2310.06640 sec. III):
 // reads the BK-solution grid selected by rp.col/rp.b
-// (params::bksolpp/bksolpA) and bicubic-interpolates it over (r,Y). Built
-// once per run in main(), after the command line has been parsed into a
-// RunParameters.
+// (rp.bk_proton_file/rp.bk_nucleus_prefix, defaulting to
+// params::bksolpp/bksolpA unless overridden on the CLI) and
+// bicubic-interpolates it over (r,Y). Built once per run in main(), after
+// the command line has been parsed into a RunParameters.
 class DipoleAmplitude{
 public:
   explicit DipoleAmplitude(const params::RunParameters& rp);

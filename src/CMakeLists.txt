@@ -2,6 +2,7 @@
 # and has a matching .hpp declaring what it exposes.
 set(NLOSINGLEINCLUSIVE_SOURCES
     main.cpp
+    cli.cpp
     params.cpp
     utils.cpp
     pdf_set.cpp
@@ -17,6 +18,7 @@ set(NLOSINGLEINCLUSIVE_SOURCES
 )
 set(NLOSINGLEINCLUSIVE_HEADERS
     common.hpp
+    cli.hpp
     params.hpp
     utils.hpp
     pdf_set.hpp
