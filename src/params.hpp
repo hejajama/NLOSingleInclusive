@@ -40,6 +40,12 @@ namespace params{
   // KCBK fit3 solution
   inline const std::string bksolpp = "./KCBK_fit_3/proton.dat";
   inline const std::string bksolpA = "./KCBK_fit_3/Pb_b_";
+  // NOTE: Qs02/gamm/ec used to be hand-set here per BK-fit choice (see git
+  // history). They're now read straight out of bksolpp's/bk_proton's own
+  // "# Initial condition: ..." header comment -- see
+  // RunParameters::Qs02/gamm/ec (populated by make_run_parameters() via
+  // read_initial_condition_header(), dipole_amplitude.hpp) -- so switching
+  // bksolpp above (or --bk-proton) is enough; nothing to keep in sync here.
 
   // KCBK bal+sd solution
   //inline const std::string bksolpp = "./KCBK_fit_5/proton.dat";
@@ -64,15 +70,6 @@ namespace params{
   //inline const std::string bksolpp = "./TBK_fit_1/proton.dat";
   //inline const std::string bksolpA = "./TBK_fit_1/Pb_b_";
 
-  // initial condition
-  //inline constexpr double Qs02 = 0.2;
-  //inline constexpr double Qs02 = 0.0964;  //First Pb run and ResumBK parent solution
-  //inline constexpr double Qs02 = 0.0833;      // KCBK fit1 and parent solution
-  inline constexpr double Qs02 = 0.0680;      // KCBK fit3
-  //inline constexpr double Qs02 = 0.0905;	 // KCBK bal+sd solution
-  //inline constexpr double Qs02 = 0.0950;      // ResumBK bal+sd solution
-  //inline constexpr double Qs02 = 0.0917;     // TBK parent (fit1) solution
-  inline constexpr double ec = 1.;
   // running coupling
   //inline constexpr running_types alpha_s_running = FIXED;
   inline constexpr double alpha_s_fixed = 0.2*M_PI/3.; // (alpha_bar=0.2)
@@ -106,7 +103,6 @@ namespace params{
   inline const double RA = (1.12 * std::pow(Anucleus, 1/3)) + (0.86 * std::pow(Anucleus, -1/3));
   inline constexpr double WSd = 0.54;
   inline constexpr double sigma_inel = 179.7733;
-  inline constexpr double gamm = 1.21;
   //inline constexpr double sigma0 = 50.2628683108;   // Henri's Au data
   //inline constexpr double sigma0 = 96.6153078;        // ResumBK and old KCBK data
   inline constexpr double sigma0 = 94.4580282;          // KCBK fit3
@@ -141,6 +137,14 @@ namespace params{
     Channel channel;
     std::string bk_proton_file;    // BK solution file for col=="pp" (params::bksolpp unless overridden on the CLI)
     std::string bk_nucleus_prefix; // BK solution filename *prefix* for col=="pA" (params::bksolpA unless overridden); load_grid() appends the digits of b directly, so a prefix meant to look like "..._<b>" must already end in "_"
+
+    // Initial-condition parameters for Sr_0() (dipole_amplitude.hpp), read
+    // out of bk_proton_file's own header comment by make_run_parameters()
+    // (via read_initial_condition_header()) -- always from the *proton*
+    // file, even when col=="pA", since Sr_0's nucleus branch is the same
+    // proton initial condition generalized through the optical Glauber TA
+    // factor, not a separate nucleus Qs02/gamma/ec.
+    double Qs02, gamm, ec;
   };
 
   // Looks up TA for the given impact parameter b in params::TAfile.

@@ -1,5 +1,7 @@
 #include "params.hpp"
 
+#include "dipole_amplitude.hpp"
+
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -89,6 +91,14 @@ RunParameters make_run_parameters(string col, double b, double p,
   rp.TA = lookup_TA(b);
   rp.bk_proton_file = bk_proton.empty() ? bksolpp : bk_proton;
   rp.bk_nucleus_prefix = bk_nucleus.empty() ? bksolpA : bk_nucleus;
+
+  // Sr_0()'s initial-condition parameters always come from the proton
+  // file's own header, whether this is a pp or pA run -- see
+  // RunParameters::Qs02/gamm/ec in params.hpp.
+  InitialConditionParams icp = read_initial_condition_header(rp.bk_proton_file);
+  rp.Qs02 = icp.Qs02;
+  rp.gamm = icp.gamma;
+  rp.ec = icp.ec;
 
   if(incoming.compare("g") == 0){
     rp.channel = (outgoing.compare("g") == 0) ? Channel::GG : Channel::GQ;

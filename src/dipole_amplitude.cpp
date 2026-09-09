@@ -3,6 +3,7 @@
 #include "common.hpp"
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <cstdlib>
 #include <fstream>
@@ -13,11 +14,71 @@
 using namespace std;
 using namespace params;
 
+namespace{
+  // Finds `marker` in `line` and parses the first floating-point number
+  // that follows it (skipping over "=", units labels, etc.) into `value`.
+  // Used to pull the initial-condition parameters out of the BK solution
+  // file's free-text header comment, e.g. marker "Q_s0^2" against
+  // "Q_s0^2 = 0.0963203 GeV^2" -> value = 0.0963203. Returns false (leaving
+  // `value` untouched) if the marker isn't in the line or no number follows
+  // it.
+  bool extract_after(const string& line, const string& marker, double& value){
+    size_t pos = line.find(marker);
+    if(pos == string::npos) return false;
+    size_t start = pos + marker.size();
+    while(start < line.size()
+          && !std::isdigit(static_cast<unsigned char>(line[start]))
+          && line[start] != '-' && line[start] != '.'){
+      start++;
+    }
+    if(start >= line.size()) return false;
+    try{
+      value = std::stod(line.substr(start));
+    } catch(const std::exception&){
+      return false;
+    }
+    return true;
+  }
+}
+
+InitialConditionParams read_initial_condition_header(const string& filename){
+  InitialConditionParams icp;
+  bool found_Qs02 = false, found_gamma = false, found_ec = false;
+
+  ifstream datafile(filename.c_str());
+  if(!datafile.is_open()){
+    cerr << "Error opening the BK solution file " << filename
+         << " to read its initial-condition header" << endl;
+    exit(1);
+  }
+  int confid=0;
+  string line;
+  double val;
+  while(confid<4 && getline(datafile,line)){
+    if(extract_after(line, "Q_s0^2", val)){ icp.Qs02 = val; found_Qs02 = true; }
+    if(extract_after(line, "\\gamma", val)){ icp.gamma = val; found_gamma = true; }
+    if(extract_after(line, "coefficient of E inside Log is", val)){ icp.ec = val; found_ec = true; }
+    if(extract_after(line, "Nf=", val)) icp.Nf = static_cast<int>(std::lround(val));
+    if(line.substr(0,3)=="###") confid++;
+  }
+  datafile.close();
+
+  if(!found_Qs02 || !found_gamma || !found_ec){
+    cerr << "Error: couldn't find Q_s0^2/\\gamma/\"coefficient of E inside Log\" "
+            "in the initial-condition header of " << filename << " -- expected a line like "
+            "\"# Initial condition: MV model, Q_s0^2 = ..., \\gamma = ..., "
+            "coefficient of E inside Log is ..., x0=..., \\Lambda_QCD = ... GeV\"" << endl;
+    exit(1);
+  }
+  return icp;
+}
+
+
 double Sr_0(const RunParameters& rp, double r){
     if(rp.col.compare("pA") == 0){
-        return exp(-0.125*sigma0*Anucleus*rp.TA*pow(Sq(r)*Qs02,gamm)*log(1/(r*LambdaQCD)+ec*M_E));
+        return exp(-0.125*sigma0*Anucleus*rp.TA*pow(Sq(r)*rp.Qs02,rp.gamm)*log(1/(r*LambdaQCD)+rp.ec*M_E));
     }
-    return exp(-0.25*pow(Sq(r)*Qs02,gamm)*log(1/(r*LambdaQCD)+ec*M_E));
+    return exp(-0.25*pow(Sq(r)*rp.Qs02,rp.gamm)*log(1/(r*LambdaQCD)+rp.ec*M_E));
 }
 
 
@@ -70,6 +131,12 @@ void DipoleAmplitude::load_grid(const RunParameters& rp,
   else{
     bksol = rp.bk_proton_file;
   }
+
+  InitialConditionParams icp = read_initial_condition_header(bksol);
+  qs02_ = icp.Qs02;
+  gamma_ = icp.gamma;
+  ec_ = icp.ec;
+  nf_ = icp.Nf;
 
   ifstream datafile(bksol.c_str());
   if(!datafile.is_open()){
