@@ -49,6 +49,30 @@ running_types parse_alpha_s_running(const string& rc){
 }
 
 
+// Rejects (alpha_s_running, channel) combinations for which the
+// corresponding NLO coefficient function (nlo_coefficients.cpp) never
+// actually applies a running-coupling factor, in any of its own branches
+// or the calling code's compensating logic (point_tables.cpp) -- see
+// docs/PAPER_MAPPING.md, "Known coupling-scheme gaps", for the full
+// derivation. Silently proceeding would compute those channels as if
+// alpha_s were fixed to 1 for the affected term, which is physically
+// wrong, not just imprecise -- so this exits rather than warns.
+static void validate_alpha_s_running(const RunParameters& rp){
+  if(rp.alpha_s_running==SMALLEST && (rp.with_gl || rp.with_gq || rp.with_gg)){
+    cerr << "Error: alpha_s_running=smallest is not implemented for the qg/gq/gg channels "
+            "(the J1/K3/H2 coefficient functions never apply a running-coupling factor for "
+            "this scheme). See docs/PAPER_MAPPING.md, \"Known coupling-scheme gaps\"." << endl;
+    exit(1);
+  }
+  if(rp.alpha_s_running==DAUGHTER && rp.with_gl){
+    cerr << "Error: alpha_s_running=daughter is not implemented for the qg channel "
+            "(the J1 coefficient function never applies a running-coupling factor for this "
+            "scheme). See docs/PAPER_MAPPING.md, \"Known coupling-scheme gaps\"." << endl;
+    exit(1);
+  }
+}
+
+
 RunParameters make_run_parameters(string col, double b, double p,
                                    string incoming, string outgoing,
                                    running_types alpha_s_running, double mu2){
@@ -78,6 +102,8 @@ RunParameters make_run_parameters(string col, double b, double p,
       rp.with_CF = true;
     }
   }
+
+  validate_alpha_s_running(rp);
 
   return rp;
 }

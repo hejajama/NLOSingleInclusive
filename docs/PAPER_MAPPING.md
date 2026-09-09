@@ -97,6 +97,67 @@ alternative subtraction scheme of:
 **This has not been verified** against arXiv:1712.07480's own equations —
 flagging it here so it isn't mistaken for settled fact.
 
+## Known coupling-scheme gaps (enforced at runtime)
+
+Checking each channel's `alpha_s_running` handling against every one of
+the seven schemes (`fixed`/`mom`/`parent`/`daughter`/`smallest`/`mixed`/
+`mixedbd`) turned up three coefficient functions whose per-scheme
+branches don't cover every scheme, where the gap is *not* filled by the
+calling code either — meaning the affected term is silently computed
+with no running-coupling factor at all (as if α_s = 1) rather than
+failing loudly:
+
+| Function | Channel | Covered internally ([nlo_coefficients.cpp](../src/nlo_coefficients.cpp)) | Covered externally ([point_tables.cpp](../src/point_tables.cpp)) | Gap |
+|---|---|---|---|---|
+| `J1` (paper's K1) | qg (`with_gl`) | none — the alpha_s code for this branch is entirely commented out | `parent`, `mixed`, `mixedbd` | **`daughter`, `smallest`** |
+| `K3` (paper's K2) | gq (`with_gq`) | `daughter`, `mixed`, `parent` | `mixed`, `mixedbd` | **`smallest`** |
+| `H2` | gg (`with_gg`) | `daughter`, `parent`, `mixed` | `mixedbd` | **`smallest`** |
+
+The qq channel (`I1`/`I2`/`J`/`Jv`, `with_CF`/`with_Nc`) was checked too
+and has no gap — every scheme is handled in all four functions.
+
+`params::make_run_parameters` now calls a `validate_alpha_s_running`
+check and exits with an error (rather than silently producing physically
+wrong results) for:
+- `alpha_s_running=smallest` combined with any of the qg/gq/gg channels
+  (`incoming`/`outgoing` selecting `with_gl`/`with_gq`/`with_gg`), and
+- `alpha_s_running=daughter` combined with the qg channel (`with_gl`).
+
+None of this affects anything actually run so far: both `Script.sh` and
+`Script_oberon.sh` hardcode `rc=mom`, and `mom` (like `fixed`) bypasses
+every per-term branch entirely — it multiplies the whole assembled
+xi-convolution by a single constant coupling in `sigma_NLO_r`, so it was
+never exposed to this gap. `parent` was also checked and is complete for
+all four channels.
+
+## Possible missing σ0/2 normalization for `pp`
+
+Eq. (8) states `∫d²b⊥ → σ0/2` for proton targets — a constant
+multiplicative factor that should appear in every `pp` cross section
+(Eqs. 7a/7b, 9, 11a-c). Tracing the code's normalization end-to-end (the
+Hankel-transform convention in `sigma_LO_k`/`sigma_NLO_k` reproduces the
+paper's `1/(4π²)` prefactor exactly), `params::sigma0` is referenced in
+exactly one place in the entire codebase:
+
+```
+dipole_amplitude.cpp: Sr_0's pA branch (Eq. 14), via sigma0*Anucleus*rp.TA
+```
+
+It is **not** referenced anywhere in the `pp` path (`Sr_0`'s pp branch,
+Eq. 13, correctly has no σ0 either — matching the paper). So the pA cross
+section correctly carries its own σ0/2 (via Eq. 14's `A·T_A(b)`
+construction), while the pp cross section appears to be missing the
+Eq. (8) σ0/2 factor entirely, making every pp result too small by a fixed
+constant (~47, for the currently-active σ0=94.46).
+
+**This has deliberately not been "fixed" or guarded against** — unlike
+the coupling-scheme gaps above, it isn't a (setting, channel) combination
+that can be rejected; it's a question of whether σ0/2 is applied
+elsewhere (a downstream plotting/analysis script) that only whoever
+maintains those scripts can answer. If you confirm it's a genuine gap,
+the fix is a single multiplication by `sigma0/2` somewhere in the pp path
+(e.g. in `sigma_LO_r`/`sigma_NLO_r`, guarded on `rp.col != "pA"`).
+
 ## Parton vs. hadron level
 
 The paper computes both parton-level (sec. IV) and hadron-level (sec. V,

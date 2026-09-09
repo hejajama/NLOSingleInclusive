@@ -32,14 +32,26 @@ deliberately use a coarse z-step to keep this bearable.
   `with_gg` code path (`H2`/`H3`/`H5` coefficient functions) that
   `pp_qq_mom` never touches.
 
+## Coupling-scheme guard: `test_alpha_s_guard.sh`
+
+```sh
+tests/regression/test_alpha_s_guard.sh
+```
+
+Separate, near-instant script (no golden output involved) that locks in
+`params::validate_alpha_s_running`'s rejection of `alpha_s_running`
+choices that are incomplete for a given channel — see
+[`../../docs/PAPER_MAPPING.md`](../../docs/PAPER_MAPPING.md), "Known
+coupling-scheme gaps".
+
 ## Known gap: no pA case
 
 `col=pA` is currently **broken** in this checkout: `params::bksolpA` in
-[`../../src/main.cpp`](../../src/main.cpp) points at the same single
+[`../../src/params.hpp`](../../src/params.hpp) points at the same single
 `./KCBK_fit_3/proton.dat` file used for `pp`, but the pA-loading code in
-[`../../src/bksol_nlodisfit.cpp`](../../src/bksol_nlodisfit.cpp) appends a
-digit derived from `b` *after* the `.dat` extension, expecting per-impact
--parameter files (e.g. `Pb_b_0`) that don't exist in
+[`../../src/dipole_amplitude.cpp`](../../src/dipole_amplitude.cpp) appends
+a digit derived from `b` *after* the `.dat` extension, expecting
+per-impact-parameter files (e.g. `Pb_b_0`) that don't exist in
 [`../../KCBK_fit_3/`](../../KCBK_fit_3/). Any `col=pA` run currently exits
 1 with `Error opening the BK solution file`. Add a `pA` case here once
 that's fixed (either point `bksolpA` at real `Pb_b_*` files, or adjust the
