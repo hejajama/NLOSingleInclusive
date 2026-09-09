@@ -60,13 +60,13 @@ running_types parse_alpha_s_running(const string& rc){
 static void validate_alpha_s_running(const RunParameters& rp){
   if(rp.alpha_s_running==SMALLEST && (rp.with_gl || rp.with_gq || rp.with_gg)){
     cerr << "Error: alpha_s_running=smallest is not implemented for the qg/gq/gg channels "
-            "(the J1/K3/H2 coefficient functions never apply a running-coupling factor for "
+            "(the K1/K2/H2 coefficient functions never apply a running-coupling factor for "
             "this scheme). See docs/PAPER_MAPPING.md, \"Known coupling-scheme gaps\"." << endl;
     exit(1);
   }
   if(rp.alpha_s_running==DAUGHTER && rp.with_gl){
     cerr << "Error: alpha_s_running=daughter is not implemented for the qg channel "
-            "(the J1 coefficient function never applies a running-coupling factor for this "
+            "(the K1 coefficient function never applies a running-coupling factor for this "
             "scheme). See docs/PAPER_MAPPING.md, \"Known coupling-scheme gaps\"." << endl;
     exit(1);
   }

@@ -15,16 +15,13 @@
 // algebraic functions of S(r,Y), and live as free functions in
 // point_tables.cpp instead.)
 //
-// IMPORTANT: several of these functions are named differently here than
-// in the paper -- the mapping is (paper symbol -> code symbol):
-//   J   (Eq. 10a) -> J          Jv  (Eq. 10b) -> Jv         I2 (Eq. 10d) -> I2
-//   H1  (Eq. 12a) -> H1 (point_tables.cpp)     H2 (Eq. 12b) -> H2
-//   H3  (Eq. 12c) -> H3          H4  (Eq. 12d) -> H5   (NOT H4!)
-//   K1  (Eq. 12e) -> 4*J1        K2  (Eq. 12f) -> 4*K3 (NOT K1/K2!)
-// i.e. J1(r,xi) == (1/4) K1_paper(r,xi) and K3(r,xi) == (1/4) K2_paper(r,xi)
-// -- the code's own "J1"/"K3" bear no relation to the paper's K1/K2
-// numbering. See docs/PAPER_MAPPING.md for the full derivation and how
-// each one plugs into the qq/qg/gq/gg channel cross sections (Eqs. 9, 11).
+// Named to match the paper's own symbols (K1/K2/H4) -- these used to be
+// called J1/K3/H5, an unrelated earlier naming with no connection to the
+// paper's own K1/K2/H4 numbering (K1/K2 also needed rescaling by 4 to
+// match the paper's literal definitions, not just renaming; see
+// docs/PAPER_MAPPING.md, "Former J1/K3/H5 naming", for the history and
+// derivation). See docs/PAPER_MAPPING.md for how each one plugs into the
+// qq/qg/gq/gg channel cross sections (Eqs. 9, 11).
 //
 // Jv2 and JJv_xi1 are not part of the "unsubtracted scheme" this paper
 // uses (Eqs. 9-12); JJv_xi1 is gated behind params::with_xi1, which is
@@ -51,16 +48,16 @@ public:
   double I2(const params::RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi);
   // qq-channel real correction, Eq. (10a).
   double J(const params::RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi);
-  // qg-channel term: J1 == (1/4) x paper's K1, Eq. (12e).
-  double J1(const params::RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi);
+  // qg-channel term, Eq. (12e).
+  double K1(const params::RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi);
   // gg-channel term, Eq. (12b) -- same symbol as the paper.
   double H2(const params::RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi);
   // gg-channel term, Eq. (12c) -- same symbol as the paper.
   double H3(const params::RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi);
-  // gg-channel term: H5 == paper's H4, Eq. (12d).
-  double H5(const params::RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi);
-  // gq-channel term: K3 == (1/4) x paper's K2, Eq. (12f).
-  double K3(const params::RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi);
+  // gg-channel term, Eq. (12d).
+  double H4(const params::RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi);
+  // gq-channel term, Eq. (12f).
+  double K2(const params::RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi);
   // qq-channel virtual correction, Eq. (10b).
   double Jv(const params::RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi);
   // Not part of Eqs. (9)-(12); see the class-level comment above.

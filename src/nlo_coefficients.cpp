@@ -47,14 +47,15 @@ double NLOCoefficients::integrand_x(double lnx, void *userdata){
   double xi=ctx.xi;
   double phi=ctx.phi;
   double flag=ctx.flag;
-  // flag=1: J, flag=-1: Jv, flag=-2: Jv2, flag=0: J-Jv(xi=1), flag=2: I2, flag=3: J1,
-  // flag=4: H2, flag=5: H3, flag=6: H5, flag=7: K3
+  // flag=1: J, flag=-1: Jv, flag=-2: Jv2, flag=0: J-Jv(xi=1), flag=2: I2,
+  // flag=3: K1/4 (the K1 wrapper multiplies by 4, see below), flag=4: H2,
+  // flag=5: H3, flag=6: H4, flag=7: K2/4 (K2 wrapper multiplies by 4)
 
   double x=exp(lnx), x2=Sq(x), r2=Sq(r), sprx=r*x*cos(phi), rpx2=r2+x2+2*sprx, rmx2=r2+x2-2*sprx;
 
   double res;
   if(flag>6.5){
-    // K3
+    // K2/4 -- the K2() wrapper multiplies this by 4 to match Eq. (12f) exactly
     double dip1 = sqrt(r2 + Sq(1-xi)*x2 + 2*(1-xi)*sprx);
     double K = (x2+sprx)/(x2*rpx2);
     res = 2 * exp(2*lnx) * K * sr1d(xi*x) * sr1d(dip1);
@@ -69,7 +70,7 @@ double NLOCoefficients::integrand_x(double lnx, void *userdata){
     }
   }
   else if(flag>5.5){
-    // H5
+    // H4, Eq. (12d)
     double dip1 = sqrt(r2 + Sq(xi)*x2 - 2*xi*sprx);
     double dip2 = sqrt(r2 + Sq(1-xi)*x2 + 2*(1-xi)*sprx);
     res = 2 * (sr1d(dip2) * sr1d(dip1) - Sq(sr1d(dip2)));
@@ -104,7 +105,7 @@ double NLOCoefficients::integrand_x(double lnx, void *userdata){
     }
   }
   else if(flag>2.5){
-    // J1
+    // K1/4 -- the K1() wrapper multiplies this by 4 to match Eq. (12e) exactly
     double dip1 = sqrt(Sq(xi)*r2+Sq(1-xi)*x2-2*xi*(1-xi)*sprx);
     double K = (x2+sprx)/(x2*rpx2);
     res = 2 * exp(2*lnx) * K * sr1d(x) * sr1d(dip1);
@@ -275,8 +276,8 @@ double NLOCoefficients::J(const RunParameters& rp, const DipoleAmplitude1DSlice&
 }
 
 
-double NLOCoefficients::J1(const RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi){
-  return func(rp,sr1d,r,xi,3);
+double NLOCoefficients::K1(const RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi){
+  return 4*func(rp,sr1d,r,xi,3);
 }
 
 
@@ -290,13 +291,13 @@ double NLOCoefficients::H3(const RunParameters& rp, const DipoleAmplitude1DSlice
 }
 
 
-double NLOCoefficients::H5(const RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi){
+double NLOCoefficients::H4(const RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi){
   return func(rp,sr1d,r,xi,6);
 }
 
 
-double NLOCoefficients::K3(const RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi){
-  return func(rp,sr1d,r,xi,7);
+double NLOCoefficients::K2(const RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi){
+  return 4*func(rp,sr1d,r,xi,7);
 }
 
 

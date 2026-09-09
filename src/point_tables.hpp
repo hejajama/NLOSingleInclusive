@@ -36,11 +36,11 @@ public:
 
   double I2(double r, double y) const;
   double J(double r, double y) const;
-  double J1(double r, double y) const;
+  double K1(double r, double y) const;
   double H2(double r, double y) const;
   double H3(double r, double y) const;
-  double H5(double r, double y) const;
-  double K3(double r, double y) const;
+  double H4(double r, double y) const;
+  double K2(double r, double y) const;
   double Jv(double r, double y) const;
   double Jv2(double r, double y) const;
   double JJv_xi1(double r, double y) const;
@@ -53,7 +53,7 @@ public:
   double dipole_slice(double r) const;
 
 private:
-  enum Coeff{ kI2, kJ, kJ1, kH2, kH3, kH5, kK3, kJv, kJv2, kJJv_xi1, kNumCoeffs };
+  enum Coeff{ kI2, kJ, kK1, kH2, kH3, kH4, kK2, kJv, kJv2, kJJv_xi1, kNumCoeffs };
 
   double minr_, maxr_;   // for xi_convolution()'s bounds clamp
   double y_floor_;       // log(1/dipole.x0()): floor applied to y before

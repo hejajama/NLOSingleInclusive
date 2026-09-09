@@ -27,39 +27,55 @@ spot a mismatch, trust the paper over this document and fix this file.
 | Sec. V | Hadron-level results (with FF convolution) | **Not implemented** — see below |
 | Appendix A | Running-coupling scheme comparison | [running_coupling.cpp](../src/running_coupling.cpp), selected via `RunParameters::alpha_s_running` |
 
-## The coefficient functions: name mismatches
+## The coefficient functions
 
 The nine functions in [nlo_coefficients.hpp](../src/nlo_coefficients.hpp)
-implement the transverse-integral terms of Eqs. (10) and (12). Most keep
-the paper's own symbol, but **three don't** — this is the single most
-important thing to know when cross-referencing code and paper:
+implement the transverse-integral terms of Eqs. (10) and (12), and all
+now use the paper's own symbols:
 
-| Paper symbol | Equation | Code symbol | Relation |
-|---|---|---|---|
-| I₁ | (10c) | `I1` (free function, [point_tables.cpp](../src/point_tables.cpp)) | same |
-| I₂ | (10d) | `NLOCoefficients::I2` | same |
-| J | (10a) | `NLOCoefficients::J` | same |
-| Jᵥ | (10b) | `NLOCoefficients::Jv` | same |
-| H₁ | (12a) | `H1` (free function, [point_tables.cpp](../src/point_tables.cpp)) | same |
-| H₂ | (12b) | `NLOCoefficients::H2` | same |
-| H₃ | (12c) | `NLOCoefficients::H3` | same |
-| **H₄** | (12d) | **`NLOCoefficients::H5`** | same function, different name |
-| **K₁** | (12e) | **`NLOCoefficients::J1`** | `J1(r,ξ) == (1/4)·K₁(r,ξ)` |
-| **K₂** | (12f) | **`NLOCoefficients::K3`** | `K3(r,ξ) == (1/4)·K₂(r,ξ)` |
-
-I.e. the code's `J1` has nothing to do with the paper's `J`, and the
-code's `K3` is unrelated to any "K3" in the paper (there is no K3 in the
-paper — only K1 and K2). Best guess at how this happened: an earlier,
-larger set of candidate terms was probably tried during development (the
-`flag` values 0-7 in `nlo_coefficients.cpp`'s `integrand_x` hint at more
-variants than ended up in the final paper), and the surviving ones kept
-their original working names rather than being renamed to match the
-paper on publication.
+| Paper symbol | Equation | Code symbol |
+|---|---|---|
+| I₁ | (10c) | `I1` (free function, [point_tables.cpp](../src/point_tables.cpp)) |
+| I₂ | (10d) | `NLOCoefficients::I2` |
+| J | (10a) | `NLOCoefficients::J` |
+| Jᵥ | (10b) | `NLOCoefficients::Jv` |
+| H₁ | (12a) | `H1` (free function, [point_tables.cpp](../src/point_tables.cpp)) |
+| H₂ | (12b) | `NLOCoefficients::H2` |
+| H₃ | (12c) | `NLOCoefficients::H3` |
+| H₄ | (12d) | `NLOCoefficients::H4` |
+| K₁ | (12e) | `NLOCoefficients::K1` |
+| K₂ | (12f) | `NLOCoefficients::K2` |
 
 `I1`/`H1` need no transverse integral (they're plain algebra in S(r,Y)),
 so they aren't part of the `NLOCoefficients` class — they're free
 functions in `point_tables.cpp`, right next to the channel decomposition
 that uses them.
+
+### Former `J1`/`K3`/`H5` naming (historical)
+
+Before this table was written, these three were named `J1`, `K3` and
+`H5` — an unrelated, earlier naming with no connection to the paper's own
+K1/K2/H4 numbering (`J1` had nothing to do with the paper's `J`, and
+there was no "K3" in the paper at all — only K1 and K2). Best guess at
+how that happened: an earlier, larger set of candidate terms was
+probably tried during development (the `flag` values 0-7 in
+`nlo_coefficients.cpp`'s `integrand_x` hint at more variants than ended
+up in the final paper), and the surviving ones kept their original
+working names rather than being renamed to match the paper on
+publication.
+
+Renaming `H5`→`H4` was a pure rename (same value). `J1`→`K1` and
+`K3`→`K2` needed rescaling as well as renaming, since the old functions
+computed exactly `1/4` of the paper's K1/K2 (their callers folded the
+missing factor of 4 into whatever multiplied them, e.g.
+`resgl2 = -tables.J1(r,y)` implicitly encoded the paper's `-(1/4)K1(r,ξ)`
+term with the `1/4` hidden inside `J1` itself): `K1`/`K2` now return the
+paper's literal Eq. (12e)/(12f) values, and the `1/4` was moved out to
+the call sites in `point_tables.cpp`'s `integrand_xi`
+(`resgl2 = -0.25*tables.K1(r,y)`, `resgq2 = -0.25*tables.K2(r,y)`),
+matching Eqs. (11b)/(11c) as literally written. Purely a rename +
+where-the-constant-lives change — every intermediate and final numeric
+value is unchanged; verified against `tests/regression/`.
 
 ## Channel → equation → `RunParameters` flag
 
@@ -109,8 +125,8 @@ failing loudly:
 
 | Function | Channel | Covered internally ([nlo_coefficients.cpp](../src/nlo_coefficients.cpp)) | Covered externally ([point_tables.cpp](../src/point_tables.cpp)) | Gap |
 |---|---|---|---|---|
-| `J1` (paper's K1) | qg (`with_gl`) | none — the alpha_s code for this branch is entirely commented out | `parent`, `mixed`, `mixedbd` | **`daughter`, `smallest`** |
-| `K3` (paper's K2) | gq (`with_gq`) | `daughter`, `mixed`, `parent` | `mixed`, `mixedbd` | **`smallest`** |
+| `K1` | qg (`with_gl`) | none — the alpha_s code for this branch is entirely commented out | `parent`, `mixed`, `mixedbd` | **`daughter`, `smallest`** |
+| `K2` | gq (`with_gq`) | `daughter`, `mixed`, `parent` | `mixed`, `mixedbd` | **`smallest`** |
 | `H2` | gg (`with_gg`) | `daughter`, `parent`, `mixed` | `mixedbd` | **`smallest`** |
 
 The qq channel (`I1`/`I2`/`J`/`Jv`, `with_CF`/`with_Nc`) was checked too

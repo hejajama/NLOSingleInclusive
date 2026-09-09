@@ -63,11 +63,11 @@ PointTables::PointTables(const RunParameters& rp, const PdfSet& pdf,
 
 double PointTables::I2(double r, double y) const{ return coeff_splines_[kI2].eval(r, max(y, y_floor_)); }
 double PointTables::J(double r, double y) const{ return coeff_splines_[kJ].eval(r, max(y, y_floor_)); }
-double PointTables::J1(double r, double y) const{ return coeff_splines_[kJ1].eval(r, max(y, y_floor_)); }
+double PointTables::K1(double r, double y) const{ return coeff_splines_[kK1].eval(r, max(y, y_floor_)); }
 double PointTables::H2(double r, double y) const{ return coeff_splines_[kH2].eval(r, max(y, y_floor_)); }
 double PointTables::H3(double r, double y) const{ return coeff_splines_[kH3].eval(r, max(y, y_floor_)); }
-double PointTables::H5(double r, double y) const{ return coeff_splines_[kH5].eval(r, max(y, y_floor_)); }
-double PointTables::K3(double r, double y) const{ return coeff_splines_[kK3].eval(r, max(y, y_floor_)); }
+double PointTables::H4(double r, double y) const{ return coeff_splines_[kH4].eval(r, max(y, y_floor_)); }
+double PointTables::K2(double r, double y) const{ return coeff_splines_[kK2].eval(r, max(y, y_floor_)); }
 double PointTables::Jv(double r, double y) const{ return coeff_splines_[kJv].eval(r, max(y, y_floor_)); }
 double PointTables::Jv2(double r, double y) const{ return coeff_splines_[kJv2].eval(r, max(y, y_floor_)); }
 double PointTables::JJv_xi1(double r, double y) const{ return coeff_splines_[kJJv_xi1].eval(r, max(y, y_floor_)); }
@@ -117,22 +117,22 @@ void PointTables::build_coefficient_tables(const RunParameters& rp, const Dipole
       double r=rvals[j];
       double I2_tmp=(rp.with_CF ? nlo.I2(rp,sr1d,r,xi) : 0);
       double J_tmp=(rp.with_Nc ? nlo.J(rp,sr1d,r,xi) : 0);
-      double J1_tmp=(rp.with_gl ? nlo.J1(rp,sr1d,r,xi) : 0);
+      double K1_tmp=(rp.with_gl ? nlo.K1(rp,sr1d,r,xi) : 0);
       double H2_tmp=(rp.with_gg ? nlo.H2(rp,sr1d,r,xi) : 0);
       double H3_tmp=(rp.with_gg ? nlo.H3(rp,sr1d,r,xi) : 0);
-      double H5_tmp=(rp.with_gg ? nlo.H5(rp,sr1d,r,xi) : 0);
-      double K3_tmp=(rp.with_gq ? nlo.K3(rp,sr1d,r,xi) : 0);
+      double H4_tmp=(rp.with_gg ? nlo.H4(rp,sr1d,r,xi) : 0);
+      double K2_tmp=(rp.with_gq ? nlo.K2(rp,sr1d,r,xi) : 0);
       double Jv_tmp=(rp.with_Nc ? nlo.Jv(rp,sr1d,r,xi) : 0);
       double Jv2_tmp=(rp.with_Nc ? nlo.Jv2(rp,sr1d,r,xi) : 0);
       double JJv_xi1_tmp=(with_xi1 ? nlo.JJv_xi1(rp,sr1d,r) : 0);
 
       coeff_splines_[kI2].set(j,i,I2_tmp);
       coeff_splines_[kJ].set(j,i,J_tmp);
-      coeff_splines_[kJ1].set(j,i,J1_tmp);
+      coeff_splines_[kK1].set(j,i,K1_tmp);
       coeff_splines_[kH2].set(j,i,H2_tmp);
       coeff_splines_[kH3].set(j,i,H3_tmp);
-      coeff_splines_[kH5].set(j,i,H5_tmp);
-      coeff_splines_[kK3].set(j,i,K3_tmp);
+      coeff_splines_[kH4].set(j,i,H4_tmp);
+      coeff_splines_[kK2].set(j,i,K2_tmp);
       coeff_splines_[kJv].set(j,i,Jv_tmp);
       coeff_splines_[kJv2].set(j,i,Jv2_tmp);
       coeff_splines_[kJJv_xi1].set(j,i,JJv_xi1_tmp);
@@ -190,11 +190,10 @@ double PointTables::integrand_xi(double xi, void *userdata){
     double resNc=real_Nc*xq_xi+virt_Nc*xq_xi1;
     res+=(Nc*(1+xi2)*resNc)/(1-xi);
   }
-  // qg channel, Eq. (11b) (note: tables.J1 here is (1/4) x the paper's K1,
-  // Eq. 12e -- see nlo_coefficients.hpp).
+  // qg channel, Eq. (11b): [(1/2)I1(xi*r) + (1/4)H1(r) - (1/4)K1(r)].
   if(rp.with_gl){
     double resgl1 = (xi>xp ? 0.25*H1(rp,dipole,r,y) + 0.5*I1(rp,dipole,xi*r,y) : 0);
-    double resgl2 = (xi>xp ? -tables.J1(r,y) : 0);
+    double resgl2 = (xi>xp ? -0.25*tables.K1(r,y) : 0);
     if(rp.alpha_s_running==PARENT){
         resgl2*=alpha_s_pos(r);
     }
@@ -204,11 +203,10 @@ double PointTables::integrand_xi(double xi, void *userdata){
     }
     res += ((resgl1+resgl2)*Nc*xq_xi*(1+Sq(1-xi)))/xi;
 }
-  // gq channel, Eq. (11c) (note: tables.K3 here is (1/4) x the paper's K2,
-  // Eq. 12f -- see nlo_coefficients.hpp).
+  // gq channel, Eq. (11c): [(1/2)I1(r) + (1/4)H1(xi*r) - (1/4)K2(r)].
   if(rp.with_gq){
     double resgq1 = (xi>xp ? 0.25*H1(rp,dipole,xi*r,y) + 0.5*I1(rp,dipole,r,y) : 0);
-    double resgq2 = (xi>xp ? - tables.K3(r,y) : 0);
+    double resgq2 = (xi>xp ? -0.25*tables.K2(r,y) : 0);
     if(rp.alpha_s_running==MIXED || rp.alpha_s_running==MIXEDBD){
         resgq1 *= alpha_s_mom(k);
         if(rp.alpha_s_running == MIXEDBD){
@@ -220,14 +218,13 @@ double PointTables::integrand_xi(double xi, void *userdata){
     res += (resgq*xg_xi*(Sq(xi)+Sq(1-xi)));
   }
   // gg channel, Eq. (11a). gg2/gg3 are the two square-bracket terms after
-  // the [H1+H1-H2] one; gg3 (Nf-weighted below) is the term built from
-  // tables.H5, which is the paper's H4 (Eq. 12d), not H5 -- see
-  // nlo_coefficients.hpp.
+  // the [H1+H1-H2] one; gg3 (Nf-weighted below) is built from tables.H4
+  // (Eq. 12d).
   if(rp.with_gg){
     double gg11 = (xi>xp ? H1(rp,dipole,r,y) + H1(rp,dipole,xi*r,y) : 0);
     double gg12 = (xi>xp ? - tables.H2(r,y) : 0);
     double gg2 = tables.H3(r,y) - M_1_PI*(2*log(k)-log(rp.mu2)+2*log(1-xi))*Sq(dipole.S(r,y));
-    double gg3 = tables.H5(r,y) - 0.5*M_1_PI*(2*log(k)-log(rp.mu2)+2*log(1-xi))*Sq(dipole.S(r,y));
+    double gg3 = tables.H4(r,y) - 0.5*M_1_PI*(2*log(k)-log(rp.mu2)+2*log(1-xi))*Sq(dipole.S(r,y));
     if(rp.alpha_s_running == PARENT){
         gg2 *= alpha_s_pos(r);
         gg3 *= alpha_s_pos(r);
