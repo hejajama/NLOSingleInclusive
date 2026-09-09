@@ -1,3 +1,20 @@
+#include "xi_int.hpp"
+
+#include "Sr_interp_2D.hpp"
+#include "bksol_nlodisfit.hpp"
+#include "common.hpp"
+#include "params.hpp"
+#include "utils.hpp"
+#include "xi_interp.hpp"
+
+#include <cmath>
+#include <gsl/gsl_integration.h>
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_spline.h>
+
+using namespace std;
+using namespace params;
+
 namespace interp_xi_int{
   gsl_spline *spline;
   gsl_interp_accel *acc;
@@ -14,7 +31,7 @@ double xi_int_interp(double r){
 
 
 double I1(double r, double y){
-  using namespace params;  
+  using namespace params;
   double res=(Sr_interp_2D(r,y)*(2*log(c0/r)-log(mu2)))/(2*M_PI);
   if(alpha_s_running==PARENT || alpha_s_running==DAUGHTER || alpha_s_running==SMALLEST){
     return alpha_s_pos(r)*res;
@@ -137,6 +154,7 @@ double integrand_xi(double xi, void *userdata){
 
 double integral_xi(double r, double xp, double xg, double k){
   using namespace amplitude;
+  using namespace params;
   double userdata[4];
   userdata[0]=r;
   userdata[1]=xp;
@@ -147,14 +165,14 @@ double integral_xi(double r, double xp, double xg, double k){
   F.params=userdata;
   gsl_integration_workspace *w=gsl_integration_workspace_alloc(gsl_maxpoints);
   double result, error;
-    
+
     gsl_integration_qags(&F,0,1-xg,0,epsrel_gsl,gsl_maxpoints,w,&result,&error);
     //gsl_integration_qags(&F,0,1-xg/x0,0,epsrel_gsl,gsl_maxpoints,w,&result,&error);
     //gsl_integration_qags(&F,0,1-xg/(std::exp(-Y0threshold)),0,epsrel_gsl,gsl_maxpoints,w,&result,&error);
     //gsl_integration_qags(&F,1-xg/(std::exp(-Y0threshold)),1-xg/x0,0,epsrel_gsl,gsl_maxpoints,w,&result,&error);
-    
+
   gsl_integration_workspace_free(w);
-     
+
   return result;
 }
 

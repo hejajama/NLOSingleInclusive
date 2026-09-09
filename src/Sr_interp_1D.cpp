@@ -1,3 +1,13 @@
+#include "Sr_interp_1D.hpp"
+
+#include "Sr_interp_2D.hpp"
+#include "bksol_nlodisfit.hpp"
+
+#include <algorithm>
+#include <gsl/gsl_spline.h>
+
+using namespace std;
+
 namespace interp_Sr_1D{
   gsl_spline *spline;
   gsl_interp_accel *acc;

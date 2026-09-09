@@ -1,143 +1,10 @@
-/*
-DE-Quadrature
-Numerical Automatic Integrator for Improper Integral
-    method    : Double Exponential (DE) Transformation
-    dimension : one
-    table     : not use
-functions
-    intde  : integrator of f(x) over (a,b).
-    intdei : integrator of f(x) over (a,infinity), 
-                 f(x) is non oscillatory function.
-    intdeo : integrator of f(x) over (a,infinity), 
-                 f(x) is oscillatory function.
-*/
+#include "intde1.hpp"
 
-/*
-intde
-    [description]
-        I = integral of f(x) over (a,b)
-    [declaration]
-        void intde(double (*f)(double), double a, double b, double eps, 
-            double *i, double *err);
-    [usage]
-        intde(f, a, b, eps, &i, &err);
-    [parameters]
-        f         : integrand f(x) (double (*f)(double))
-        a         : lower limit of integration (double)
-        b         : upper limit of integration (double)
-        eps       : relative error requested (double)
-        i         : approximation to the integral (double *)
-        err       : estimate of the absolute error (double *)
-    [remarks]
-        function
-            f(x) needs to be analytic over (a,b).
-        relative error
-            eps is relative error requested excluding 
-            cancellation of significant digits.
-            i.e. eps means : (absolute error) / 
-                             (integral_a^b |f(x)| dx).
-            eps does not mean : (absolute error) / I.
-        error message
-            err >= 0 : normal termination.
-            err < 0  : abnormal termination (m >= mmax).
-                       i.e. convergent error is detected :
-                           1. f(x) or (d/dx)^n f(x) has 
-                              discontinuous points or sharp 
-                              peaks over (a,b).
-                              you must divide the interval 
-                              (a,b) at this points.
-                           2. relative error of f(x) is 
-                              greater than eps.
-                           3. f(x) has oscillatory factor 
-                              and frequency of the oscillation 
-                              is very high.
-*/
-
-/*
-intdei
-    [description]
-        I = integral of f(x) over (a,infinity), 
-            f(x) has not oscillatory factor.
-    [declaration]
-        void intdei(double (*f)(double), double a, double eps, 
-            double *i, double *err);
-    [usage]
-        intdei(f, a, eps, &i, &err);
-    [parameters]
-        f         : integrand f(x) (double (*f)(double))
-        a         : lower limit of integration (double)
-        eps       : relative error requested (double)
-        i         : approximation to the integral (double *)
-        err       : estimate of the absolute error (double *)
-    [remarks]
-        function
-            f(x) needs to be analytic over (a,infinity).
-        relative error
-            eps is relative error requested excluding 
-            cancellation of significant digits.
-            i.e. eps means : (absolute error) / 
-                             (integral_a^infinity |f(x)| dx).
-            eps does not mean : (absolute error) / I.
-        error message
-            err >= 0 : normal termination.
-            err < 0  : abnormal termination (m >= mmax).
-                       i.e. convergent error is detected :
-                           1. f(x) or (d/dx)^n f(x) has 
-                              discontinuous points or sharp 
-                              peaks over (a,infinity).
-                              you must divide the interval 
-                              (a,infinity) at this points.
-                           2. relative error of f(x) is 
-                              greater than eps.
-                           3. f(x) has oscillatory factor 
-                              and decay of f(x) is very slow 
-                              as x -> infinity.
-*/
-
-/*
-intdeo
-    [description]
-        I = integral of f(x) over (a,infinity), 
-            f(x) has oscillatory factor :
-            f(x) = g(x) * sin(omega * x + theta) as x -> infinity.
-    [declaration]
-        void intdeo(double (*f)(double), double a, double omega, 
-            double eps, double *i, double *err);
-    [usage]
-        intdeo(f, a, omega, eps, &i, &err);
-    [parameters]
-        f         : integrand f(x) (double (*f)(double))
-        a         : lower limit of integration (double)
-        omega     : frequency of oscillation (double)
-        eps       : relative error requested (double)
-        i         : approximation to the integral (double *)
-        err       : estimate of the absolute error (double *)
-    [remarks]
-        function
-            f(x) needs to be analytic over (a,infinity).
-        relative error
-            eps is relative error requested excluding 
-            cancellation of significant digits.
-            i.e. eps means : (absolute error) / 
-                             (integral_a^R |f(x)| dx).
-            eps does not mean : (absolute error) / I.
-        error message
-            err >= 0 : normal termination.
-            err < 0  : abnormal termination (m >= mmax).
-                       i.e. convergent error is detected :
-                           1. f(x) or (d/dx)^n f(x) has 
-                              discontinuous points or sharp 
-                              peaks over (a,infinity).
-                              you must divide the interval 
-                              (a,infinity) at this points.
-                           2. relative error of f(x) is 
-                              greater than eps.
-*/
-
+// See intde1.hpp for the API documentation (Ooura's DE-quadrature).
 
 #include <math.h>
 
-void intde(double (*f)(double), double a, double b, double eps, 
+void intde(double (*f)(double), double a, double b, double eps,
     double *i, double *err)
 {
     /* ---- adjustable parameter ---- */
@@ -145,9 +12,9 @@ void intde(double (*f)(double), double a, double b, double eps,
     double efs = 0.1, hoff = 8.5;
     /* ------------------------------ */
     int m;
-    double pi2, epsln, epsh, h0, ehp, ehm, epst, ba, ir, h, iback, 
+    double pi2, epsln, epsh, h0, ehp, ehm, epst, ba, ir, h, iback,
         irback, t, ep, em, xw, xa, wg, fa, fb, errt, errh, errd;
-    
+
     pi2 = 2 * atan(1.0);
     epsln = 1 - log(efs * eps);
     epsh = sqrt(efs * eps);
@@ -203,7 +70,7 @@ void intde(double (*f)(double), double a, double b, double eps,
 
 
 
-void intdei(double (*f)(double), double a, double eps, 
+void intdei(double (*f)(double), double a, double eps,
     double *i, double *err)
 {
     /* ---- adjustable parameter ---- */
@@ -211,9 +78,9 @@ void intdei(double (*f)(double), double a, double eps,
     double efs = 0.1, hoff = 11.0;
     /* ------------------------------ */
     int m;
-    double pi4, epsln, epsh, h0, ehp, ehm, epst, ir, h, iback, irback, 
+    double pi4, epsln, epsh, h0, ehp, ehm, epst, ir, h, iback, irback,
         t, ep, em, xp, xm, fp, fm, errt, errh, errd;
-    
+
     pi4 = atan(1.0);
     epsln = 1 - log(efs * eps);
     epsh = sqrt(efs * eps);
@@ -267,7 +134,7 @@ void intdei(double (*f)(double), double a, double eps,
 
 
 
-void intdeo(double (*f)(double), double a, double omega, double eps, 
+void intdeo(double (*f)(double), double a, double omega, double eps,
     double *i, double *err)
 {
     /* ---- adjustable parameter ---- */
@@ -275,9 +142,9 @@ void intdeo(double (*f)(double), double a, double omega, double eps,
     double efs = 0.1, enoff = 0.40, pqoff = 2.9, ppoff = -0.72;
     /* ------------------------------ */
     int n, m, l, k;
-    double pi4, epsln, epsh, frq4, per2, pp, pq, ehp, ehm, ir, h, iback, 
+    double pi4, epsln, epsh, frq4, per2, pp, pq, ehp, ehm, ir, h, iback,
         irback, t, ep, em, tk, xw, wg, xa, fp, fm, errh, tn, errd;
-    
+
     pi4 = atan(1.0);
     epsln = 1 - log(efs * eps);
     epsh = sqrt(efs * eps);
@@ -385,4 +252,3 @@ void intdeo(double (*f)(double), double a, double omega, double eps,
         *err *= m * 0.5;
     }
 }
-

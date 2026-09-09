@@ -1,3 +1,19 @@
+#include "bksol_nlodisfit.hpp"
+
+#include "common.hpp"
+#include "params.hpp"
+#include "utils.hpp"
+
+#include <cmath>
+#include <cstdlib>
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <vector>
+#include <gsl/gsl_math.h>
+
+using namespace std;
+using namespace params;
 
  double Sr_0(double r){
      using namespace params;
@@ -30,7 +46,7 @@ void read_bkgrid(vector<double>& yvals_tmp){
 
   AmplitudeLib N(datadir);
 
-  //These are hard-coded by looking through dipole-resumbk-hera-parent-0.00.dip. 
+  //These are hard-coded by looking through dipole-resumbk-hera-parent-0.00.dip.
   //A better method is needed. (Not sure if one could search through a .dip file as if it were .dat)
   //The mins are because the nlodisfit code screams if we call for r>=25.2552 or y>=20.8.)
 
@@ -39,13 +55,13 @@ void read_bkgrid(vector<double>& yvals_tmp){
   rpoints=98;
   x0=0.00000;
 
-  double multFactor = 0.4; 
+  double multFactor = 0.4;
   vector<double> tmpvec;
   for(int i = 0; i < 52; i++){
     double this_y = multFactor * i;
     yvals_tmp.push_back(this_y);
     double this_r = minr;
-    for(int j = 0; j <= rpoints; j++){  
+    for(int j = 0; j <= rpoints; j++){
       tmpvec.push_back(1 - N.DipoleAmplitude(this_r, this_y));
       this_r *= r_mult;
     }
@@ -61,7 +77,7 @@ void read_bkgrid(vector<double>& yvals_tmp){
 void read_bkgrid(vector<double>& yvals_tmp){
     using namespace amplitude;
     using namespace params;
-    
+
     string bksol;
     if(col.compare("pA") == 0){
         if(b < 10){
@@ -74,9 +90,9 @@ void read_bkgrid(vector<double>& yvals_tmp){
     else{
         bksol = bksolpp;
     }
-   
-  
-        
+
+
+
   ifstream datafile(bksol.c_str());
   if(!datafile.is_open()){
     cerr << "Error opening the BK solution file" << endl;
@@ -98,17 +114,17 @@ void read_bkgrid(vector<double>& yvals_tmp){
         rpoints=str_to_int(line.substr(3,line.length()-3));
         break;
       case 3:
-              
+
         x0=str_to_double(line.substr(3,line.length()-3));
-              
+
         //x0=1.;
         //x0=str_to_double(line.substr(3,line.length()-3));
-              
+
         //x0 = std::exp(-x0); // x0 when read from older HM datafiles is actually evolution rapidity at the initial condition, so the corresponding x is exp(-x0); comment this out when reading from DB or the new HM datafile.
-              
+
         break;
       }
-      confid++; 
+      confid++;
     }
   }
   vector<double> tmpvec;
@@ -143,7 +159,7 @@ void init_bksol(){
 
   }
   yvals_tmp.clear();
-  
+
 
   rvals=new double[rpoints];
   for(int i=0; i<rpoints; i++){

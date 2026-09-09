@@ -1,3 +1,18 @@
+#include "func.hpp"
+
+#include "Sr_interp_1D.hpp"
+#include "bksol_nlodisfit.hpp"
+#include "common.hpp"
+#include "params.hpp"
+#include "utils.hpp"
+
+#include <algorithm>
+#include <cmath>
+#include <gsl/gsl_math.h>
+
+using namespace std;
+using namespace params;
+
 namespace func_tmp{
   gsl_integration_workspace *w_x, *w_phi;
 #pragma omp threadprivate(w_x,w_phi)
@@ -91,7 +106,7 @@ double integrand_x(double lnx, void *userdata){
     else if(alpha_s_running==DAUGHTER || alpha_s_running==SMALLEST){
       res*=alpha_s_pos(dip2);
     }
-      
+
   }else if(flag>0.5){
     // J
     double dip1=sqrt(r2+Sq(1-xi)*x2+2*(1-xi)*sprx);
@@ -116,7 +131,7 @@ double integrand_x(double lnx, void *userdata){
     else{
       res=exp(2*lnx)*K*(Sr_interp_1D(dip1)-Sr_interp_1D(dip2)*Sr_interp_1D(dip3));
     }
-      
+
   }else if(flag>-0.5){
     // J-Jv(xi=1)
     double K;
@@ -159,7 +174,7 @@ double integrand_x(double lnx, void *userdata){
     else{
       res = exp(2*lnx)*K*(Sr_interp_1D(dip1) - Sr_interp_1D(dip2)*Sr_interp_1D(dip3));
     }
-      
+
   }else{
       // Jv2
       double dip1=sqrt(r2+Sq(1-xi)*x2-2*(1-xi)*sprx);
@@ -187,7 +202,7 @@ double integrand_x(double lnx, void *userdata){
       else{
           res=-exp(2*lnx)*K*Sr_interp_1D(dip2)*Sr_interp_1D(dip3);
       }
-        
+
     }
   //if(alpha_s_running==DAUGHTER){
   //  res*=alpha_s_pos(x);
@@ -202,6 +217,7 @@ double integrand_x(double lnx, void *userdata){
 
 double integrand_phi(double phi, void *userdata){
   using namespace amplitude;
+  using namespace params;
   ((double *)userdata)[2]=phi;
   double result, error;
   gsl_function F;
@@ -214,6 +230,7 @@ double integrand_phi(double phi, void *userdata){
 
 
 double func(double r, double xi, double flag){
+  using namespace params;
   double userdata[4];
   userdata[0]=r;
   userdata[1]=xi;
@@ -241,23 +258,23 @@ double J(double r, double xi){
 double J1(double r, double xi){
   return func(r,xi,3);
 }
-    
-    
+
+
 double H2(double r, double xi){
   return func(r,xi,4);
 }
-    
-    
+
+
 double H3(double r, double xi){
   return func(r,xi,5);
 }
-    
-    
+
+
 double H5(double r, double xi){
   return func(r,xi,6);
 }
-    
-    
+
+
 double K3(double r, double xi){
   return func(r,xi,7);
 }

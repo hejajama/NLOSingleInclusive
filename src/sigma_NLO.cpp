@@ -1,3 +1,17 @@
+#include "sigma_NLO.hpp"
+
+#include "bksol_nlodisfit.hpp"
+#include "common.hpp"
+#include "intde1.hpp"
+#include "params.hpp"
+#include "utils.hpp"
+#include "xi_int.hpp"
+
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_sf_bessel.h>
+
+using namespace params;
+
 namespace sigma_NLO_k_tmp{
   double k_tmp, xp_tmp;
 }
@@ -44,7 +58,7 @@ double sigma_NLO_k(double k, double xp){
 double integrand_sigma_NLO_p(double z){
     using namespace params;
     using namespace sigma_NLO_p_tmp;
-    
+
     // Compute FF(z)
     fragini_.fini=0;
     double FF;
@@ -54,7 +68,7 @@ double integrand_sigma_NLO_p(double z){
     int parton_tmp = parton;
     double scalesqr_tmp = scalesqr;
     fdss_(ih_tmp, ic_tmp, io_tmp, z, scalesqr_tmp, parton_tmp, FF);
-    
+
     // Compute sigma_NLO_k(p/z, tau/z)
     double k = p_tmp/z;
     mu2=Sq(k);
@@ -63,7 +77,7 @@ double integrand_sigma_NLO_p(double z){
     init_interp(xp,xg,k);
     double mult = sigma_NLO_k(k,xp);
     clear_interp();
-    
+
     return mult*FF/Sq(z);
 }
 

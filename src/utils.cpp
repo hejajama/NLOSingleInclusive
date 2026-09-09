@@ -1,3 +1,19 @@
+#include "utils.hpp"
+
+#include "common.hpp"
+#include "params.hpp"
+
+#include <cmath>
+#include <cstdlib>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <gsl/gsl_errno.h>
+#include <gsl/gsl_math.h>
+
+using namespace std;
+using namespace params;
+
 namespace pdf{
   LHAPDF::PDF* lhpdf;
 }
@@ -6,12 +22,12 @@ namespace pdf{
 double xf(double x, double Q2){
     using namespace pdf;
     using namespace params;
-    
+
     if(x<0 || x>1){
         cerr << "Bad x= " << x << endl;
         exit(1);
     }
-    
+
     // 0: gluon
     // 1: d, -1: dbar
     // 2: u, -2: ubar
@@ -24,7 +40,7 @@ double xf(double x, double Q2){
     else if(incoming.compare("dbar") == 0) particle_flag = -1;
     else if(incoming.compare("ubar") == 0) particle_flag = -2;
     else if(incoming.compare("sbar") == 0) particle_flag = -3;
-    
+
     return lhpdf->xfxQ2(particle_flag,x,Q2);
 }
 
@@ -132,5 +148,4 @@ double WSnormintegrand(double b, void *userdata){
     return (2 * M_PI * b) / denom;
 }
 */
-
 

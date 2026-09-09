@@ -1,3 +1,15 @@
+#include "Sr_interp_2D.hpp"
+
+#include "bksol_nlodisfit.hpp"
+#include "params.hpp"
+
+#include <algorithm>
+#include <cmath>
+#include <gsl/gsl_spline2d.h>
+
+using namespace std;
+using namespace params;
+
 namespace interp_Sr_2D{
   gsl_spline2d *spline;
   gsl_interp_accel *xacc, *yacc;
@@ -10,7 +22,7 @@ double Sr_interp_2D(double r, double y){
   using namespace params;
   if(r<minr) return 1;
   if(r>maxr) return 0;
-  
+
   /*
   if(col.compare("pA") == 0){
     return exp(-0.125*sigma0*Anucleus*TA*pow(Sq(r)*Qs02,gamm)*log(1/(r*LambdaQCD)+ec*M_E));
@@ -22,9 +34,9 @@ double Sr_interp_2D(double r, double y){
   return gsl_spline2d_eval(spline,r,max(0.0,y-std::log(1/x0)),xacc,yacc);        // ResumBK or KCBK
   //return gsl_spline2d_eval(spline,r,max(0.0,y-std::log(1/(x0*min(1.0,Sq(r))))),xacc,yacc);    // TBK
 }
- 
 
- 
+
+
 /*
 double Sr_interp_2D(double r, double y){
     using namespace amplitude;
@@ -53,7 +65,6 @@ void init_Sr_interp_2D(){
   gsl_spline2d_init(spline,rvals,yvals,Srvals,rpoints,ypoints);
   delete[] Srvals;
 }
-
 
 
 

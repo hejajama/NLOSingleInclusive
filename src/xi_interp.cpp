@@ -1,3 +1,17 @@
+#include "xi_interp.hpp"
+
+#include "Sr_interp_1D.hpp"
+#include "bksol_nlodisfit.hpp"
+#include "func.hpp"
+#include "params.hpp"
+
+#include <algorithm>
+#include <cmath>
+#include <gsl/gsl_spline2d.h>
+
+using namespace std;
+using namespace params;
+
 namespace interp_xi{
   gsl_spline2d *spline_I2, *spline_J, *spline_J1, *spline_K3, *spline_H2, *spline_H3, *spline_H5, *spline_Jv, *spline_Jv2, *spline_JJv_xi1;
   gsl_interp_accel *xacc_I2, *yacc_I2, *xacc_J, *yacc_J, *xacc_J1, *yacc_J1, *xacc_K3, *yacc_K3, *xacc_H2, *yacc_H2, *xacc_H3, *yacc_H3, *xacc_H5, *yacc_H5, *xacc_Jv, *yacc_Jv, *xacc_Jv2, *yacc_Jv2,
@@ -79,8 +93,9 @@ double JJv_xi1_interp(double r, double y){
 void init_xi_interp(double xg){
   using namespace amplitude;
   using namespace interp_xi;
+  using namespace params;
 
-  
+
   double yg=log(1/xg);
 
   int realypoints=0;
@@ -88,7 +103,7 @@ void init_xi_interp(double xg){
     realypoints++;
     if(1-(yvals[i]+std::log(1/x0))/yg<1e-5) break;
   }
-  //cout << realypoints << endl;    
+  //cout << realypoints << endl;
 
   double *yvals_tmp=new double[realypoints];
   for(int i=0; i<realypoints; i++){
@@ -104,27 +119,27 @@ void init_xi_interp(double xg){
   spline_J=gsl_spline2d_alloc(gsl_interp2d_bicubic,rpoints,realypoints);
   xacc_J=gsl_interp_accel_alloc();
   yacc_J=gsl_interp_accel_alloc();
-    
+
   double *J1_vals=new double[rpoints*realypoints];
   spline_J1=gsl_spline2d_alloc(gsl_interp2d_bicubic,rpoints,realypoints);
   xacc_J1=gsl_interp_accel_alloc();
   yacc_J1=gsl_interp_accel_alloc();
-    
+
   double *H2_vals=new double[rpoints*realypoints];
   spline_H2=gsl_spline2d_alloc(gsl_interp2d_bicubic,rpoints,realypoints);
   xacc_H2=gsl_interp_accel_alloc();
   yacc_H2=gsl_interp_accel_alloc();
-    
+
   double *H3_vals=new double[rpoints*realypoints];
   spline_H3=gsl_spline2d_alloc(gsl_interp2d_bicubic,rpoints,realypoints);
   xacc_H3=gsl_interp_accel_alloc();
   yacc_H3=gsl_interp_accel_alloc();
-    
+
   double *H5_vals=new double[rpoints*realypoints];
   spline_H5=gsl_spline2d_alloc(gsl_interp2d_bicubic,rpoints,realypoints);
   xacc_H5=gsl_interp_accel_alloc();
   yacc_H5=gsl_interp_accel_alloc();
-    
+
   double *K3_vals=new double[rpoints*realypoints];
   spline_K3=gsl_spline2d_alloc(gsl_interp2d_bicubic,rpoints,realypoints);
   xacc_K3=gsl_interp_accel_alloc();
@@ -134,7 +149,7 @@ void init_xi_interp(double xg){
   spline_Jv=gsl_spline2d_alloc(gsl_interp2d_bicubic,rpoints,realypoints);
   xacc_Jv=gsl_interp_accel_alloc();
   yacc_Jv=gsl_interp_accel_alloc();
-    
+
   double *Jv2_vals=new double[rpoints*realypoints];
   spline_Jv2=gsl_spline2d_alloc(gsl_interp2d_bicubic,rpoints,realypoints);
   xacc_Jv2=gsl_interp_accel_alloc();
@@ -144,7 +159,7 @@ void init_xi_interp(double xg){
   spline_JJv_xi1=gsl_spline2d_alloc(gsl_interp2d_bicubic,rpoints,realypoints);
   xacc_JJv_xi1=gsl_interp_accel_alloc();
   yacc_JJv_xi1=gsl_interp_accel_alloc();
-    
+
    // cout << "check" << endl;
 
   for(int i=0; i<realypoints; i++){
@@ -204,7 +219,7 @@ void init_xi_interp(double xg){
   gsl_spline2d_init(spline_Jv2,rvals,yvals_tmp,Jv2_vals,rpoints,realypoints);
   gsl_spline2d_init(spline_JJv_xi1,rvals,yvals_tmp,JJv_xi1_vals,
                     rpoints,realypoints);
-    
+
 
   delete[] yvals_tmp;
   delete[] I2_vals;
@@ -230,23 +245,23 @@ void clear_xi_interp(){
   gsl_spline2d_free(spline_J);
   gsl_interp_accel_free(xacc_J);
   gsl_interp_accel_free(yacc_J);
-    
+
   gsl_spline2d_free(spline_J1);
   gsl_interp_accel_free(xacc_J1);
   gsl_interp_accel_free(yacc_J1);
-    
+
   gsl_spline2d_free(spline_H2);
   gsl_interp_accel_free(xacc_H2);
   gsl_interp_accel_free(yacc_H2);
-    
+
   gsl_spline2d_free(spline_H3);
   gsl_interp_accel_free(xacc_H3);
   gsl_interp_accel_free(yacc_H3);
-    
+
   gsl_spline2d_free(spline_H5);
   gsl_interp_accel_free(xacc_H5);
   gsl_interp_accel_free(yacc_H5);
-    
+
   gsl_spline2d_free(spline_K3);
   gsl_interp_accel_free(xacc_K3);
   gsl_interp_accel_free(yacc_K3);
@@ -254,7 +269,7 @@ void clear_xi_interp(){
   gsl_spline2d_free(spline_Jv);
   gsl_interp_accel_free(xacc_Jv);
   gsl_interp_accel_free(yacc_Jv);
-    
+
   gsl_spline2d_free(spline_Jv2);
   gsl_interp_accel_free(xacc_Jv2);
   gsl_interp_accel_free(yacc_Jv2);

@@ -1,3 +1,16 @@
+#include "sigma_LO.hpp"
+
+#include "Sr_interp_1D.hpp"
+#include "common.hpp"
+#include "intde1.hpp"
+#include "params.hpp"
+#include "utils.hpp"
+
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_sf_bessel.h>
+
+using namespace params;
+
 namespace sigma_LO_k_tmp{
   double k_tmp, xp_tmp;
 }
@@ -34,7 +47,7 @@ double sigma_LO_k(double k, double xp){
 double integrand_sigma_LO_p(double z){
     using namespace params;
     using namespace sigma_LO_p_tmp;
-    
+
     // Compute FF(z)
     fragini_.fini=0;
     double FF;
@@ -44,7 +57,7 @@ double integrand_sigma_LO_p(double z){
     int parton_tmp = parton;
     double scalesqr_tmp = scalesqr;
     fdss_(ih_tmp, ic_tmp, io_tmp, z, scalesqr_tmp, parton_tmp, FF);
-    
+
     // Compute sigma_LO_k(p/z, tau/z)
     double k = p_tmp/z;
     mu2=Sq(k);
@@ -53,7 +66,7 @@ double integrand_sigma_LO_p(double z){
     init_interp(xp,xg,k);
     double mult = sigma_LO_k(k,xp);
     clear_interp();
-    
+
     return mult*FF/Sq(z);
 }
 
