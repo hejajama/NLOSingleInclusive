@@ -38,7 +38,8 @@ double sigma_NLO_r(const RunParameters& rp, const PdfSet& pdf, const PointTables
   }else if(rp.alpha_s_running==MOM){
     as=alpha_s_mom(rp.mu2);
   }else{
-    as=1;
+    cerr << "sigma_NLO_r: alpha_s_running=" << rp.alpha_s_running << " not supported" << endl;
+    exit(1);
   }
   // rp.channel is always exactly one of QQ/QG/GQ/GG, so this condition is a
   // tautology (with_xi1's dead-code case never has to carry it alone) --
