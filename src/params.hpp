@@ -46,6 +46,16 @@ namespace params{
   // RunParameters::Qs02/gamm/ec (populated by make_run_parameters() via
   // read_initial_condition_header(), dipole_amplitude.hpp) -- so switching
   // bksolpp above (or --bk-proton) is enough; nothing to keep in sync here.
+  //
+  // Fallback values read_initial_condition_header() uses (with a warning)
+  // for whichever of Q_s0^2/\gamma/the E-log coefficient it can't find in
+  // a given file's header -- the same KCBK fit3 values these used to be
+  // hand-set to above before that reader existed. If the BK-fit choice
+  // above is changed away from KCBK fit3, prefer pointing bksolpp/
+  // --bk-proton at a file with a proper header over relying on these.
+  inline constexpr double default_Qs02 = 0.0680;
+  inline constexpr double default_gamm = 1.21;
+  inline constexpr double default_ec = 1.;
 
   // KCBK bal+sd solution
   //inline const std::string bksolpp = "./KCBK_fit_5/proton.dat";
@@ -111,6 +121,12 @@ namespace params{
   //inline constexpr double sigma0 = 39.3446708;        // ResumBK parent
   //inline constexpr double sigma0 = 40.320583;      // ResumBK bal+sd
   //inline constexpr double sigma0 = 31.7941922;        // TBK parent (fit1)
+  // NOTE: overridable per-run via --sigma02 (see cli.hpp), which takes
+  // sigma0/2 (in GeV^-2, or in mb with a trailing "mb" token) and doubles
+  // it into RunParameters::sigma0 below; this compile-time sigma0 is just
+  // the default when --sigma02 isn't given.
+  // 1 mb = 1/GeV2_to_mb GeV^-2 (ħc)^2 in the PDG's GeV^2*mb convention.
+  inline constexpr double GeV2_to_mb = 0.389379;
 
   inline const std::string TAfile = "./TAvalues_Pb_Heikki.dat";     // Pb
 
@@ -145,6 +161,11 @@ namespace params{
     // proton initial condition generalized through the optical Glauber TA
     // factor, not a separate nucleus Qs02/gamma/ec.
     double Qs02, gamm, ec;
+
+    // Sr_0()'s pA-branch normalization (Eq. 14): params::sigma0 unless
+    // overridden by --sigma02 (see cli.hpp) -- --sigma02 takes sigma0/2, so
+    // that flag's value is doubled into this field.
+    double sigma0;
   };
 
   // Looks up TA for the given impact parameter b in params::TAfile.
@@ -161,9 +182,13 @@ namespace params{
   // bk_proton/bk_nucleus override params::bksolpp/params::bksolpA for this
   // run when non-empty (see --bk-proton/--bk-nucleus in cli.hpp); an empty
   // string (the default) keeps the compiled-in params.hpp value.
+  // sigma0 becomes RunParameters::sigma0 as-is (params::sigma0 by default;
+  // cli::parse() has already folded --sigma02's sigma0/2 input into this
+  // full sigma0 value by the time main() calls this).
   RunParameters make_run_parameters(std::string col, double b, double p,
                                      std::string incoming, std::string outgoing,
                                      running_types alpha_s_running, double mu2,
                                      const std::string& bk_proton = "",
-                                     const std::string& bk_nucleus = "");
+                                     const std::string& bk_nucleus = "",
+                                     double sigma0 = params::sigma0);
 }

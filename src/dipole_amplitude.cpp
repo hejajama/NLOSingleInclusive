@@ -63,12 +63,29 @@ InitialConditionParams read_initial_condition_header(const string& filename){
   }
   datafile.close();
 
-  if(!found_Qs02 || !found_gamma || !found_ec){
-    cerr << "Error: couldn't find Q_s0^2/\\gamma/\"coefficient of E inside Log\" "
-            "in the initial-condition header of " << filename << " -- expected a line like "
-            "\"# Initial condition: MV model, Q_s0^2 = ..., \\gamma = ..., "
-            "coefficient of E inside Log is ..., x0=..., \\Lambda_QCD = ... GeV\"" << endl;
-    exit(1);
+  // A file missing any of these in its header comment falls back to
+  // params::default_Qs02/gamm/ec (the values Sr_0's initial condition used
+  // to be hand-tuned to before this parser existed) rather than exiting --
+  // but warns, since a silently wrong default is exactly the kind of
+  // mismatch this parser was added to catch (see f75242d).
+  if(!found_Qs02){
+    cerr << "Warning: couldn't find Q_s0^2 in the initial-condition header of "
+         << filename << " -- expected a line like \"# Initial condition: MV "
+            "model, Q_s0^2 = ..., \\gamma = ..., coefficient of E inside Log "
+            "is ..., x0=..., \\Lambda_QCD = ... GeV\"; using default Q_s0^2 = "
+         << default_Qs02 << endl;
+    icp.Qs02 = default_Qs02;
+  }
+  if(!found_gamma){
+    cerr << "Warning: couldn't find \\gamma in the initial-condition header of "
+         << filename << "; using default \\gamma = " << default_gamm << endl;
+    icp.gamma = default_gamm;
+  }
+  if(!found_ec){
+    cerr << "Warning: couldn't find \"coefficient of E inside Log\" in the "
+            "initial-condition header of " << filename << "; using default "
+            "value " << default_ec << endl;
+    icp.ec = default_ec;
   }
   return icp;
 }
@@ -76,7 +93,7 @@ InitialConditionParams read_initial_condition_header(const string& filename){
 
 double Sr_0(const RunParameters& rp, double r){
     if(rp.col.compare("pA") == 0){
-        return exp(-0.125*sigma0*Anucleus*rp.TA*pow(Sq(r)*rp.Qs02,rp.gamm)*log(1/(r*LambdaQCD)+rp.ec*M_E));
+        return exp(-0.125*rp.sigma0*Anucleus*rp.TA*pow(Sq(r)*rp.Qs02,rp.gamm)*log(1/(r*LambdaQCD)+rp.ec*M_E));
     }
     return exp(-0.25*pow(Sq(r)*rp.Qs02,rp.gamm)*log(1/(r*LambdaQCD)+rp.ec*M_E));
 }

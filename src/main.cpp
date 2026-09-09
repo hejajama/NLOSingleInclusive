@@ -19,9 +19,9 @@ using namespace params;
 
 // CLI: see cli.hpp. Named flags (--zmin --zmax --zstep --col --b --incoming
 // --outgoing --rc --p --muratio, plus optional --sqrts/--y/--bk-proton/
-// --bk-nucleus) are preferred; the original positional form (zmin zmax
-// zstep col b incoming outgoing rc p muratio) is still accepted for
-// backward compatibility.
+// --bk-nucleus/--sigma02) are preferred; the original positional form
+// (zmin zmax zstep col b incoming outgoing rc p muratio) is still
+// accepted for backward compatibility.
 //
 // Scans the parton-level LO+NLO single-inclusive cross section
 // (arXiv:2310.06640 sec. IV) over z = p/k (p is the fixed CLI argument;
@@ -38,7 +38,7 @@ int main(int argc, char* argv[]){
 
     const RunParameters rp = make_run_parameters(args.col, args.b, args.p, args.incoming, args.outgoing,
                                                   alpha_s_running, mu2,
-                                                  args.bk_proton, args.bk_nucleus);
+                                                  args.bk_proton, args.bk_nucleus, args.sigma0);
 
     PdfSet pdf(pdfname);
     DipoleAmplitude dipole(rp);

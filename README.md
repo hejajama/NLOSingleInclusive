@@ -55,7 +55,7 @@ Flags (any order, all required unless marked optional):
 |---|---|
 | `--zmin`, `--zmax`, `--zstep` | Scan range/step in `z = p/k` |
 | `--col` | Collision system: `pp` or `pA` |
-| `--b` | Impact parameter (fm); looked up in the `TAvalues` file for `pA` |
+| `--b` | Impact parameter ($\mathrm{GeV}^{-1}$); looked up in the `TAvalues` file for `pA` |
 | `--incoming` | Incoming parton: `g`, `q`, `u`, `d`, `s`, `ubar`, `dbar`, `sbar` |
 | `--outgoing` | Outgoing parton: `q` or `g` (selects the qq/qg/gq/gg channel together with `--incoming`) |
 | `--rc` | Running-coupling prescription: `fixed`, `mom`, `parent`, `daughter`, `smallest`, `mixed`, `mixedbd` |
@@ -65,6 +65,7 @@ Flags (any order, all required unless marked optional):
 | `--y` *(optional)* | Produced parton's rapidity; defaults to `params::yh` in [src/params.hpp](src/params.hpp) |
 | `--bk-proton` *(optional)* | BK solution file used when `--col pp`; defaults to `params::bksolpp` |
 | `--bk-nucleus` *(optional)* | BK solution filename *prefix* used when `--col pA`; defaults to `params::bksolpA`. The code appends the digits of `--b` directly (no separator inserted), so a prefix meant to read as `..._<b>` must already end in `_`, e.g. `--bk-nucleus ./KCBK_fit_3/Pb_b_` |
+| `--sigma02` *(optional)* | `sigma0/2`, in GeV^-2, doubled into `sigma0` (Sr_0's pA-branch normalization, Eq. 14); defaults to `params::sigma0/2`. Append a literal `mb` to give the value in millibarns instead, e.g. `--sigma02 47.2 mb` |
 
 A legacy positional form is also still accepted for backward
 compatibility with older scripts:
@@ -74,8 +75,8 @@ compatibility with older scripts:
 ```
 
 (same fields, in that fixed order; `--sqrts`/`--y`/`--bk-proton`/
-`--bk-nucleus` have no positional equivalent, so that form always uses the
-compiled-in defaults).
+`--bk-nucleus`/`--sigma02` have no positional equivalent, so that form
+always uses the compiled-in defaults).
 
 ## Output
 

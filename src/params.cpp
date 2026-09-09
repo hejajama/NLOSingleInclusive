@@ -79,7 +79,8 @@ static void validate_alpha_s_running(const RunParameters& rp){
 RunParameters make_run_parameters(string col, double b, double p,
                                    string incoming, string outgoing,
                                    running_types alpha_s_running, double mu2,
-                                   const string& bk_proton, const string& bk_nucleus){
+                                   const string& bk_proton, const string& bk_nucleus,
+                                   double sigma0){
   RunParameters rp;
   rp.col = col;
   rp.b = b;
@@ -91,6 +92,7 @@ RunParameters make_run_parameters(string col, double b, double p,
   rp.TA = lookup_TA(b);
   rp.bk_proton_file = bk_proton.empty() ? bksolpp : bk_proton;
   rp.bk_nucleus_prefix = bk_nucleus.empty() ? bksolpA : bk_nucleus;
+  rp.sigma0 = sigma0;
 
   // Sr_0()'s initial-condition parameters always come from the proton
   // file's own header, whether this is a pp or pA run -- see

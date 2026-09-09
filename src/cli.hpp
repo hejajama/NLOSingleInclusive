@@ -17,6 +17,12 @@
 //        *prefix* used for --col pA -- the code appends the digits of --b
 //        directly (no separator is inserted), so a prefix meant to read as
 //        "..._<b>" must already end in "_", e.g. --bk-nucleus ./dir/Pb_b_
+//      --sigma02 <value> [mb] (default params::sigma0/2): sigma0/2, i.e.
+//        half of Sr_0()'s pA-branch normalization (RunParameters::sigma0
+//        is stored as 2x this value, matching params::sigma0). The value
+//        is taken to already be in GeV^-2 unless a literal trailing "mb"
+//        token follows it, in which case it's first converted from
+//        millibarns (e.g. --sigma02 47.2 mb).
 //
 //  - Legacy positional form, kept for backward compatibility with existing
 //    scripts (Script.sh, Script_oberon.sh, tests/regression/cases/*/args):
@@ -41,6 +47,7 @@ struct Args{
   double y;       // params::yh unless overridden by --y
   std::string bk_proton;   // empty unless --bk-proton given (params::make_run_parameters then keeps params::bksolpp)
   std::string bk_nucleus;  // empty unless --bk-nucleus given (params::make_run_parameters then keeps params::bksolpA)
+  double sigma0;  // params::sigma0 unless overridden by --sigma02 (already doubled from that flag's sigma0/2 input)
 };
 
 // Parses argc/argv as passed to main() (argv[0] is the program name).
