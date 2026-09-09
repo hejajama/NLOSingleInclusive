@@ -20,9 +20,9 @@ class PdfSet;   // pdf_set.hpp -- only used by reference here
 // section at fixed r: the dxi integral in arXiv:2310.06640 Eqs. (9)
 // (qq channel) and (11a-11c) (gg/qg/gq channels), sec. II -- see
 // integrand_xi() in point_tables.cpp for the channel-by-channel
-// breakdown (params::RunParameters::with_CF/with_Nc select Eq. (9),
-// with_gg selects Eq. (11a), with_gl selects Eq. (11b), with_gq selects
-// Eq. (11c)).
+// breakdown (params::RunParameters::channel selects which of Eq. (9)
+// [Channel::QQ] / Eq. (11a) [Channel::GG] / Eq. (11b) [Channel::QG] /
+// Eq. (11c) [Channel::GQ] applies).
 //
 // Built once per (z,k) point in main()'s loop; replaces the old
 // init_interp()/clear_interp() free-function pair with a

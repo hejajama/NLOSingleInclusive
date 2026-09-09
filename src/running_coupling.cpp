@@ -17,3 +17,13 @@ double alpha_s_pos(double r){
 double alpha_s_mom(double Q2){
   return (4*M_PI)/(beta0*log(Q2/Sq(LambdaQCD)));
 }
+
+
+bool is_position_space_alpha_s(running_types rc){
+  return rc==PARENT || rc==DAUGHTER || rc==SMALLEST;
+}
+
+
+bool is_mixed_alpha_s(running_types rc){
+  return rc==MIXED || rc==MIXEDBD;
+}

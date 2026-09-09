@@ -8,6 +8,16 @@
 // factor (arXiv:2310.06640). Selected on the command line (see main.cpp).
 enum running_types {FIXED, MOM, PARENT, DAUGHTER, SMALLEST, MIXED, MIXEDBD};
 
+// Parton-level channel: which combination of incoming/outgoing partons a
+// run computes, derived from the "incoming"/"outgoing" CLI tokens in
+// params::make_run_parameters(). Replaces the five with_Nc/with_CF/with_gl/
+// with_gq/with_gg booleans RunParameters used to carry (with_Nc and
+// with_CF were always set together, for exactly the QQ channel below --
+// see docs/PAPER_MAPPING.md, "Channel -> equation -> RunParameters flag",
+// for which paper equation each value selects: QQ -> Eq. (9), GG ->
+// Eq. (11a), QG -> Eq. (11b) [old with_gl], GQ -> Eq. (11c) [old with_gq]).
+enum class Channel { QQ, QG, GQ, GG };
+
 // Physics constants and analysis choices fixed by this particular study and
 // BK-fit choice (see the comments below for the alternatives this has been
 // swapped between) -- change by editing here and recompiling. These never
@@ -67,9 +77,9 @@ namespace params{
   //inline constexpr running_types alpha_s_running = FIXED;
   inline constexpr double alpha_s_fixed = 0.2*M_PI/3.; // (alpha_bar=0.2)
   inline constexpr double alpha_s_freeze = 0.7;
-  // choice of terms: with_xi1 is a fixed analysis choice; with_Nc/CF/gl/gq/gg
-  // are *derived from the command line* (params::RunParameters below), since
-  // they select which parton channel (qq/qg/gq/gg) is being computed.
+  // choice of terms: with_xi1 is a fixed analysis choice; RunParameters::channel
+  // is *derived from the command line* (params::RunParameters below), since
+  // it selects which parton channel (qq/qg/gq/gg) is being computed.
   inline constexpr bool with_xi1 = false;  // True iff one wants to use the subtracted scheme (still not exactly CXY, see the paper)
   // kinematics
   //inline constexpr double SQRTS = 500;    // Forward RHIC (GeV)
@@ -128,11 +138,7 @@ namespace params{
     running_types alpha_s_running;
     double mu2;
     double TA;              // params::TAfile row matching b
-    bool with_Nc;
-    bool with_CF;
-    bool with_gl;
-    bool with_gq;
-    bool with_gg;
+    Channel channel;
   };
 
   // Looks up TA for the given impact parameter b in params::TAfile.
@@ -145,8 +151,7 @@ namespace params{
   running_types parse_alpha_s_running(const std::string& rc);
 
   // Builds a RunParameters from the already-parsed CLI fields: looks up TA
-  // via lookup_TA(b), and derives with_Nc/with_CF/with_gl/with_gq/with_gg
-  // from incoming/outgoing.
+  // via lookup_TA(b), and derives channel from incoming/outgoing.
   RunParameters make_run_parameters(std::string col, double b, double p,
                                      std::string incoming, std::string outgoing,
                                      running_types alpha_s_running, double mu2);

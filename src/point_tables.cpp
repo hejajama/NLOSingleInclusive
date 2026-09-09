@@ -23,7 +23,7 @@ namespace {
   // build_xi_convolution()/integrand_xi needs them.
   double I1(const RunParameters& rp, const DipoleAmplitude& dipole, double r, double y){
     double res=(dipole.S(r,y)*(2*log(c0/r)-log(rp.mu2)))/(2*M_PI);
-    if(rp.alpha_s_running==PARENT || rp.alpha_s_running==DAUGHTER || rp.alpha_s_running==SMALLEST){
+    if(is_position_space_alpha_s(rp.alpha_s_running)){
       return alpha_s_pos(r)*res;
     }else{
       return res;
@@ -32,7 +32,7 @@ namespace {
 
   double H1(const RunParameters& rp, const DipoleAmplitude& dipole, double r, double y){
     double res=(Sq(dipole.S(r,y))*(2*log(c0/r)-log(rp.mu2)))/M_PI;
-    if(rp.alpha_s_running==PARENT || rp.alpha_s_running==DAUGHTER || rp.alpha_s_running==SMALLEST){
+    if(is_position_space_alpha_s(rp.alpha_s_running)){
       return alpha_s_pos(r)*res;
     }else{
       return res;
@@ -115,15 +115,15 @@ void PointTables::build_coefficient_tables(const RunParameters& rp, const Dipole
 
     for(int j=0; j<rpoints; j++){
       double r=rvals[j];
-      double I2_tmp=(rp.with_CF ? nlo.I2(rp,sr1d,r,xi) : 0);
-      double J_tmp=(rp.with_Nc ? nlo.J(rp,sr1d,r,xi) : 0);
-      double K1_tmp=(rp.with_gl ? nlo.K1(rp,sr1d,r,xi) : 0);
-      double H2_tmp=(rp.with_gg ? nlo.H2(rp,sr1d,r,xi) : 0);
-      double H3_tmp=(rp.with_gg ? nlo.H3(rp,sr1d,r,xi) : 0);
-      double H4_tmp=(rp.with_gg ? nlo.H4(rp,sr1d,r,xi) : 0);
-      double K2_tmp=(rp.with_gq ? nlo.K2(rp,sr1d,r,xi) : 0);
-      double Jv_tmp=(rp.with_Nc ? nlo.Jv(rp,sr1d,r,xi) : 0);
-      double Jv2_tmp=(rp.with_Nc ? nlo.Jv2(rp,sr1d,r,xi) : 0);
+      double I2_tmp=(rp.channel==Channel::QQ ? nlo.I2(rp,sr1d,r,xi) : 0);
+      double J_tmp=(rp.channel==Channel::QQ ? nlo.J(rp,sr1d,r,xi) : 0);
+      double K1_tmp=(rp.channel==Channel::QG ? nlo.K1(rp,sr1d,r,xi) : 0);
+      double H2_tmp=(rp.channel==Channel::GG ? nlo.H2(rp,sr1d,r,xi) : 0);
+      double H3_tmp=(rp.channel==Channel::GG ? nlo.H3(rp,sr1d,r,xi) : 0);
+      double H4_tmp=(rp.channel==Channel::GG ? nlo.H4(rp,sr1d,r,xi) : 0);
+      double K2_tmp=(rp.channel==Channel::GQ ? nlo.K2(rp,sr1d,r,xi) : 0);
+      double Jv_tmp=(rp.channel==Channel::QQ ? nlo.Jv(rp,sr1d,r,xi) : 0);
+      double Jv2_tmp=(rp.channel==Channel::QQ ? nlo.Jv2(rp,sr1d,r,xi) : 0);
       double JJv_xi1_tmp=(with_xi1 ? nlo.JJv_xi1(rp,sr1d,r) : 0);
 
       coeff_splines_[kI2].set(j,i,I2_tmp);
@@ -164,17 +164,20 @@ double PointTables::integrand_xi(double xi, void *userdata){
   double xg_xi1=pdf.xf(rp,xp,rp.mu2);
   //
   double res=0;
-  // qq channel, Eq. (9): the with_CF block is the I1/I2 (C_F-scaling) part
-  // and with_Nc below is the J/Jv (N_c-scaling) part of the same equation
-  // -- the large-Nc decomposition splits Eq. (9) across the two.
-  if(rp.with_CF){
+  // qq channel, Eq. (9): the first Channel::QQ block is the I1/I2
+  // (C_F-scaling) part and the second is the J/Jv (N_c-scaling) part of the
+  // same equation -- the large-Nc decomposition splits Eq. (9) across the
+  // two (both execute together, since both are gated on Channel::QQ; kept
+  // as two blocks, matching the original with_CF/with_Nc split, rather than
+  // merged into one).
+  if(rp.channel==Channel::QQ){
     double real_CF=0;
     double virt_CF=-M_1_PI*(2*log(k) - log(rp.mu2) + 2*log(1-xi))*dipole.S(r,y);
-    if(rp.alpha_s_running==PARENT || rp.alpha_s_running==DAUGHTER || rp.alpha_s_running==SMALLEST){
+    if(is_position_space_alpha_s(rp.alpha_s_running)){
         virt_CF*=alpha_s_pos(r);
         real_CF+=(xi>xp ? I1(rp,dipole,r,y)+I1(rp,dipole,xi*r,y) - 4*tables.I2(r,y) : 0);
     }
-    else if(rp.alpha_s_running==MIXED || rp.alpha_s_running==MIXEDBD){
+    else if(is_mixed_alpha_s(rp.alpha_s_running)){
         virt_CF*=alpha_s_mom(k);
         real_CF+=(xi>xp ? (I1(rp,dipole,r,y)+I1(rp,dipole,xi*r,y) - 4*tables.I2(r,y))*alpha_s_mom(k) : 0);
     }
@@ -183,31 +186,31 @@ double PointTables::integrand_xi(double xi, void *userdata){
     }
     res+=(CF*(1+xi2)*(real_CF*xq_xi+virt_CF*xq_xi1))/(1-xi);
   }
-  if(rp.with_Nc){
-    // qq channel, Eq. (9) -- N_c-scaling part; see with_CF above.
+  if(rp.channel==Channel::QQ){
+    // qq channel, Eq. (9) -- N_c-scaling part; see the Channel::QQ block above.
     double real_Nc=(xi>xp ? tables.J(r,y) : 0);
     double virt_Nc=-tables.Jv(r,y);
     double resNc=real_Nc*xq_xi+virt_Nc*xq_xi1;
     res+=(Nc*(1+xi2)*resNc)/(1-xi);
   }
   // qg channel, Eq. (11b): [(1/2)I1(xi*r) + (1/4)H1(r) - (1/4)K1(r)].
-  if(rp.with_gl){
+  if(rp.channel==Channel::QG){
     double resgl1 = (xi>xp ? 0.25*H1(rp,dipole,r,y) + 0.5*I1(rp,dipole,xi*r,y) : 0);
     double resgl2 = (xi>xp ? -0.25*tables.K1(r,y) : 0);
     if(rp.alpha_s_running==PARENT){
         resgl2*=alpha_s_pos(r);
     }
-    else if(rp.alpha_s_running==MIXED || rp.alpha_s_running==MIXEDBD){
+    else if(is_mixed_alpha_s(rp.alpha_s_running)){
         resgl1*=alpha_s_pos(k);
         resgl2*=alpha_s_pos(k);
     }
     res += ((resgl1+resgl2)*Nc*xq_xi*(1+Sq(1-xi)))/xi;
 }
   // gq channel, Eq. (11c): [(1/2)I1(r) + (1/4)H1(xi*r) - (1/4)K2(r)].
-  if(rp.with_gq){
+  if(rp.channel==Channel::GQ){
     double resgq1 = (xi>xp ? 0.25*H1(rp,dipole,xi*r,y) + 0.5*I1(rp,dipole,r,y) : 0);
     double resgq2 = (xi>xp ? -0.25*tables.K2(r,y) : 0);
-    if(rp.alpha_s_running==MIXED || rp.alpha_s_running==MIXEDBD){
+    if(is_mixed_alpha_s(rp.alpha_s_running)){
         resgq1 *= alpha_s_mom(k);
         if(rp.alpha_s_running == MIXEDBD){
             resgq2 *= alpha_s_mom(k);
@@ -220,7 +223,7 @@ double PointTables::integrand_xi(double xi, void *userdata){
   // gg channel, Eq. (11a). gg2/gg3 are the two square-bracket terms after
   // the [H1+H1-H2] one; gg3 (Nf-weighted below) is built from tables.H4
   // (Eq. 12d).
-  if(rp.with_gg){
+  if(rp.channel==Channel::GG){
     double gg11 = (xi>xp ? H1(rp,dipole,r,y) + H1(rp,dipole,xi*r,y) : 0);
     double gg12 = (xi>xp ? - tables.H2(r,y) : 0);
     double gg2 = tables.H3(r,y) - M_1_PI*(2*log(k)-log(rp.mu2)+2*log(1-xi))*Sq(dipole.S(r,y));
@@ -229,7 +232,7 @@ double PointTables::integrand_xi(double xi, void *userdata){
         gg2 *= alpha_s_pos(r);
         gg3 *= alpha_s_pos(r);
     }
-    else if(rp.alpha_s_running == MIXED || rp.alpha_s_running == MIXEDBD){
+    else if(is_mixed_alpha_s(rp.alpha_s_running)){
         gg2 *= alpha_s_mom(k);
         gg3 *= alpha_s_mom(k);
         gg11 *= alpha_s_mom(k);
@@ -245,7 +248,7 @@ double PointTables::integrand_xi(double xi, void *userdata){
   if(with_xi1){
     double sub=Nc*2*tables.JJv_xi1(r,y)*xq_xi1 / (1-xi);
     if(rp.alpha_s_running==PARENT) sub*=alpha_s_pos(r);
-    res+=(rp.with_Nc ? -sub : sub);
+    res+=(rp.channel==Channel::QQ ? -sub : sub);
   }
   //res/=1-xi;
   if(gsl_finite(res)==1){

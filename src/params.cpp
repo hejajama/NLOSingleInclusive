@@ -58,13 +58,14 @@ running_types parse_alpha_s_running(const string& rc){
 // alpha_s were fixed to 1 for the affected term, which is physically
 // wrong, not just imprecise -- so this exits rather than warns.
 static void validate_alpha_s_running(const RunParameters& rp){
-  if(rp.alpha_s_running==SMALLEST && (rp.with_gl || rp.with_gq || rp.with_gg)){
+  if(rp.alpha_s_running==SMALLEST &&
+     (rp.channel==Channel::QG || rp.channel==Channel::GQ || rp.channel==Channel::GG)){
     cerr << "Error: alpha_s_running=smallest is not implemented for the qg/gq/gg channels "
             "(the K1/K2/H2 coefficient functions never apply a running-coupling factor for "
             "this scheme). See docs/PAPER_MAPPING.md, \"Known coupling-scheme gaps\"." << endl;
     exit(1);
   }
-  if(rp.alpha_s_running==DAUGHTER && rp.with_gl){
+  if(rp.alpha_s_running==DAUGHTER && rp.channel==Channel::QG){
     cerr << "Error: alpha_s_running=daughter is not implemented for the qg channel "
             "(the K1 coefficient function never applies a running-coupling factor for this "
             "scheme). See docs/PAPER_MAPPING.md, \"Known coupling-scheme gaps\"." << endl;
@@ -86,21 +87,11 @@ RunParameters make_run_parameters(string col, double b, double p,
   rp.mu2 = mu2;
   rp.TA = lookup_TA(b);
 
-  rp.with_Nc = false;
-  rp.with_CF = false;
-  rp.with_gl = false;
-  rp.with_gq = false;
-  rp.with_gg = false;
   if(incoming.compare("g") == 0){
-    if(outgoing.compare("g") == 0) rp.with_gg = true;
-    else rp.with_gq = true;
+    rp.channel = (outgoing.compare("g") == 0) ? Channel::GG : Channel::GQ;
   }
   else{
-    if(outgoing.compare("g") == 0) rp.with_gl = true;
-    else{
-      rp.with_Nc = true;
-      rp.with_CF = true;
-    }
+    rp.channel = (outgoing.compare("g") == 0) ? Channel::QG : Channel::QQ;
   }
 
   validate_alpha_s_running(rp);

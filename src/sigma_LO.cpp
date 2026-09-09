@@ -24,10 +24,10 @@ namespace {
 
 double sigma_LO_r(const RunParameters& rp, const PdfSet& pdf, const PointTables& tables,
                    double r, double xp){
-  if(rp.with_Nc||rp.with_CF){
+  if(rp.channel==Channel::QQ){
     return pdf.xf(rp,xp,rp.mu2)*tables.dipole_slice(r);   // Eq. 7a, quark channel
   }
-  else if(rp.with_gg){
+  else if(rp.channel==Channel::GG){
     return pdf.xf(rp,xp,rp.mu2)*Sq(tables.dipole_slice(r));   // Eq. 7b, gluon channel
   }
   return 0;

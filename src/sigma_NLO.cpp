@@ -26,10 +26,10 @@ namespace {
 double sigma_NLO_r(const RunParameters& rp, const PdfSet& pdf, const PointTables& tables,
                     double r, double k, double xp){
   double res = 0;
-  if(rp.with_Nc || rp.with_CF){
+  if(rp.channel==Channel::QQ){
       res += pdf.xf(rp,xp,rp.mu2)*Sr_0(rp,r);
   }
-  if(rp.with_gg){
+  if(rp.channel==Channel::GG){
       res += pdf.xf(rp,xp,rp.mu2)*Sq(Sr_0(rp,r));
   }
   double as;
@@ -40,7 +40,12 @@ double sigma_NLO_r(const RunParameters& rp, const PdfSet& pdf, const PointTables
   }else{
     as=1;
   }
-   if(rp.with_Nc || with_xi1 || rp.with_CF || rp.with_gl || rp.with_gq || rp.with_gg) res+=as*tables.xi_convolution(r);
+  // rp.channel is always exactly one of QQ/QG/GQ/GG, so this condition is a
+  // tautology (with_xi1's dead-code case never has to carry it alone) --
+  // kept in this form, matching the original with_Nc/with_CF/with_gl/
+  // with_gq/with_gg OR chain, rather than collapsed to `true`.
+  if(rp.channel==Channel::QQ || with_xi1 || rp.channel==Channel::QG ||
+     rp.channel==Channel::GQ || rp.channel==Channel::GG) res+=as*tables.xi_convolution(r);
   return res;
 }
 
