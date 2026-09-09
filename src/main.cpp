@@ -35,7 +35,7 @@ namespace params{
  
   // KCBK fit3 solution
   const string bksolpp = "./KCBK_fit_3/proton.dat";
-  const string bksolpA = "./KCBK_fit_3/Pb_b_";
+  const string bksolpA = "./KCBK_fit_3/proton.dat"; //"./KCBK_fit_3/Pb_b_";
  
   // KCBK bal+sd solution
   //const string bksolpp = "./KCBK_fit_5/proton.dat";
