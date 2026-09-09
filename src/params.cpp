@@ -1,9 +1,9 @@
 #include "params.hpp"
-#include "utils.hpp"
 
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <string>
 
 using namespace std;
 
@@ -16,9 +16,8 @@ double lookup_TA(double b){
     exit(1);
   }
   double TA = 0;
-  while(!datafile.eof()){
-    string line;
-    getline(datafile, line);
+  string line;
+  while(getline(datafile, line)){
     if(line.size() == 0){
       break;
     }
@@ -26,9 +25,9 @@ double lookup_TA(double b){
     while(line.compare(loc,1,",") != 0){
       loc++;
     }
-    double this_b = str_to_double(line.substr(0, loc));
+    double this_b = std::stod(line.substr(0, loc));
     if(this_b == b){
-      TA = str_to_double(line.substr(loc+1, line.size()-loc-1));
+      TA = std::stod(line.substr(loc+1, line.size()-loc-1));
       break;
     }
   }

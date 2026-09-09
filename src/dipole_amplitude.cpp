@@ -1,7 +1,6 @@
 #include "dipole_amplitude.hpp"
 
 #include "common.hpp"
-#include "utils.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -78,38 +77,35 @@ void DipoleAmplitude::load_grid(const RunParameters& rp,
     exit(1);
   }
   int confid=0;
-  while(!datafile.eof() and confid<4){
-    string line;
-    getline(datafile,line);
+  string line;
+  while(confid<4 && getline(datafile,line)){
     if(line.substr(0,3)=="###"){
       switch(confid){
       case 0:
-        minr_=str_to_double(line.substr(3,line.length()-3));
+        minr_=std::stod(line.substr(3,line.length()-3));
         break;
       case 1:
-        r_mult_=str_to_double(line.substr(3,line.length()-3));
+        r_mult_=std::stod(line.substr(3,line.length()-3));
         break;
       case 2:
-        rpoints_=str_to_int(line.substr(3,line.length()-3));
+        rpoints_=std::stoi(line.substr(3,line.length()-3));
         break;
       case 3:
-        x0_=str_to_double(line.substr(3,line.length()-3));
+        x0_=std::stod(line.substr(3,line.length()-3));
         break;
       }
       confid++;
     }
   }
   vector<double> tmpvec;
-  while(!datafile.eof()){
-    string line;
-    getline(datafile,line);
+  while(getline(datafile,line)){
     if(line.substr(0,3)=="###"){
       if(tmpvec.size()>0) Sr.push_back(tmpvec);
-      yvals_tmp.push_back(str_to_double(line.substr(3,line.length()-3)));
+      yvals_tmp.push_back(std::stod(line.substr(3,line.length()-3)));
       tmpvec.clear();
       continue;
     }
-    tmpvec.push_back(1-str_to_double(line));
+    tmpvec.push_back(1-std::stod(line));
   }
   Sr.push_back(tmpvec);
   datafile.close();

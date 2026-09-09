@@ -2,6 +2,8 @@
 
 #include "common.hpp"
 #include "nlo_coefficients.hpp"
+#include "pdf_set.hpp"
+#include "running_coupling.hpp"
 
 #include <algorithm>
 #include <cmath>

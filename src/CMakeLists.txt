@@ -1,9 +1,11 @@
-# Each .cpp below is its own translation unit (no more #include-ing .cpp
-# files into main.cpp) and has a matching .hpp declaring what it exposes.
+# Each .cpp below is its own translation unit
+# and has a matching .hpp declaring what it exposes.
 set(NLOSINGLEINCLUSIVE_SOURCES
     main.cpp
     params.cpp
     utils.cpp
+    pdf_set.cpp
+    running_coupling.cpp
     spline_wrappers.cpp
     dipole_amplitude.cpp
     Sr_interp_1D.cpp
@@ -17,6 +19,8 @@ set(NLOSINGLEINCLUSIVE_HEADERS
     common.hpp
     params.hpp
     utils.hpp
+    pdf_set.hpp
+    running_coupling.hpp
     spline_wrappers.hpp
     dipole_amplitude.hpp
     Sr_interp_1D.hpp

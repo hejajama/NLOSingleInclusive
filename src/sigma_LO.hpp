@@ -1,8 +1,8 @@
 #pragma once
 
 #include "params.hpp"
+#include "pdf_set.hpp"
 #include "point_tables.hpp"
-#include "utils.hpp"
 
 // LO single-inclusive cross section (as a function of transverse momentum
 // k and parton momentum fraction xp), arXiv:2310.06640, obtained by

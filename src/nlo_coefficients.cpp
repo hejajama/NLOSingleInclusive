@@ -1,7 +1,7 @@
 #include "nlo_coefficients.hpp"
 
 #include "common.hpp"
-#include "utils.hpp"
+#include "running_coupling.hpp"
 
 #include <algorithm>
 #include <cmath>

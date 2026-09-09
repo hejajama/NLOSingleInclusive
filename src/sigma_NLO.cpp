@@ -3,6 +3,7 @@
 #include "common.hpp"
 #include "dipole_amplitude.hpp"
 #include "intde1.hpp"
+#include "running_coupling.hpp"
 
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_sf_bessel.h>

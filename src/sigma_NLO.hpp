@@ -1,8 +1,8 @@
 #pragma once
 
 #include "params.hpp"
+#include "pdf_set.hpp"
 #include "point_tables.hpp"
-#include "utils.hpp"
 
 // NLO single-inclusive cross section correction (arXiv:2310.06640), obtained
 // by Hankel-transforming sigma_NLO_r(r,k,xp), which combines the LO piece

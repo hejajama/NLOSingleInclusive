@@ -4,9 +4,10 @@
 #include "dipole_amplitude.hpp"
 #include "params.hpp"
 #include "spline_wrappers.hpp"
-#include "utils.hpp"
 
 #include <array>
+
+class PdfSet;   // pdf_set.hpp -- only used by reference here
 
 // Everything that depends on a single kinematic point (xp, xg, k): bicubic
 // (r,Y) interpolations of the ten NLO coefficient functions

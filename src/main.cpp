@@ -1,6 +1,7 @@
 #include "common.hpp"
 #include "dipole_amplitude.hpp"
 #include "params.hpp"
+#include "pdf_set.hpp"
 #include "point_tables.hpp"
 #include "sigma_LO.hpp"
 #include "sigma_NLO.hpp"
@@ -17,16 +18,16 @@ using namespace params;
 
 int main(int argc, char* argv[]){
 
-    double zmin = str_to_double(argv[1]);
-    double zmax = str_to_double(argv[2]);
-    double zstep = str_to_double(argv[3]);
+    double zmin = std::stod(argv[1]);
+    double zmax = std::stod(argv[2]);
+    double zstep = std::stod(argv[3]);
     string col = argv[4];
-    double b = str_to_double(argv[5]);
+    double b = std::stod(argv[5]);
     string incoming = argv[6];
     string outgoing = argv[7];
     string rc = argv[8];
-    double p = str_to_double(argv[9]);
-    double muratio = str_to_double(argv[10]);
+    double p = std::stod(argv[9]);
+    double muratio = std::stod(argv[10]);
     double mu2 = Sq(muratio*p);
     running_types alpha_s_running = parse_alpha_s_running(rc);
 
