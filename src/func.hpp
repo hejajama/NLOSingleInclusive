@@ -1,5 +1,7 @@
 #pragma once
 
+#include "params.hpp"
+
 #include <gsl/gsl_integration.h>
 
 // GSL integration workspaces used by func()'s phi/x double integral.
@@ -18,14 +20,15 @@ namespace func_tmp{
 // Each numerically integrates func()'s underlying x,phi double integral
 // (see func.cpp) with a channel-specific integrand selected by an internal
 // flag. JJv_xi1 is the xi->1 subtraction term used only when
-// params::with_xi1 is enabled.
-double I2(double r, double xi);
-double J(double r, double xi);
-double J1(double r, double xi);
-double H2(double r, double xi);
-double H3(double r, double xi);
-double H5(double r, double xi);
-double K3(double r, double xi);
-double Jv(double r, double xi);
-double Jv2(double r, double xi);
-double JJv_xi1(double r);
+// params::with_xi1 is enabled. All depend on rp.alpha_s_running (the
+// running-coupling prescription).
+double I2(const params::RunParameters& rp, double r, double xi);
+double J(const params::RunParameters& rp, double r, double xi);
+double J1(const params::RunParameters& rp, double r, double xi);
+double H2(const params::RunParameters& rp, double r, double xi);
+double H3(const params::RunParameters& rp, double r, double xi);
+double H5(const params::RunParameters& rp, double r, double xi);
+double K3(const params::RunParameters& rp, double r, double xi);
+double Jv(const params::RunParameters& rp, double r, double xi);
+double Jv2(const params::RunParameters& rp, double r, double xi);
+double JJv_xi1(const params::RunParameters& rp, double r);

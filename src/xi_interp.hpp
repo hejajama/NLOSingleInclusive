@@ -1,5 +1,7 @@
 #pragma once
 
+#include "params.hpp"
+
 // Bicubic (r,Y) interpolations of the func.hpp coefficient functions,
 // built once per event by init_xi_interp() so the xi-convolution
 // (xi_int.cpp) can evaluate them cheaply inside its xi integral.
@@ -16,5 +18,7 @@ double JJv_xi1_interp(double r, double y);
 
 // xg: the gluon momentum fraction at the current kinematic point, used to
 // bound the rapidity range the coefficient functions are tabulated over.
-void init_xi_interp(double xg);
+// Which coefficient functions actually get computed (vs. left at zero)
+// depends on rp.with_CF/with_Nc/with_gl/with_gq/with_gg.
+void init_xi_interp(const params::RunParameters& rp, double xg);
 void clear_xi_interp();

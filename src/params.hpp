@@ -1,140 +1,153 @@
 #pragma once
 
+#include <cmath>
 #include <string>
+#include <gsl/gsl_math.h>
 
 // Choice of running-coupling prescription for alpha_s(r) in the NLO impact
 // factor (arXiv:2310.06640). Selected on the command line (see main.cpp).
 enum running_types {FIXED, MOM, PARENT, DAUGHTER, SMALLEST, MIXED, MIXEDBD};
 
-// Run configuration: physical constants, the choice of dipole-amplitude fit
-// to use, kinematics, and the mutable state derived from the command-line
-// arguments (col, b, incoming, outgoing, alpha_s_running, mu2, TA, ...).
-//
-// This is still the original flat, partly-mutable global config carried
-// over unchanged from the pre-refactor main.cpp — only split into
-// declaration (here) + definition (params.cpp) so every translation unit
-// can see it without re-defining it. Turning it into a proper immutable
-// RunParameters value type is a later refactor stage.
+// Physics constants and analysis choices fixed by this particular study and
+// BK-fit choice (see the comments below for the alternatives this has been
+// swapped between) -- change by editing here and recompiling. These never
+// vary within a run, so unlike RunParameters (below) they are plain
+// compile-time-ish constants, not something threaded through the call
+// graph: C++17 inline variables let every translation unit share exactly
+// one definition without a separate params.cpp.
 namespace params{
   // First Pb BK solution
-  //const string bksolpA = "./Pb/Pb_smallest_b_";
-  //const string bksolpp = "./Pb/proton_resumbk_fit1_smallest";
+  //inline const std::string bksolpA = "./Pb/Pb_smallest_b_";
+  //inline const std::string bksolpp = "./Pb/proton_resumbk_fit1_smallest";
 
   // KCBK fit1 solution
-  //const string bksolpA = "./kcbk_fit1_sigma0_18.81mb/Pb_smallest_b_";
-  //const string bksolpp = "./kcbk_fit1_sigma0_18.81mb/p_smallest";
+  //inline const std::string bksolpA = "./kcbk_fit1_sigma0_18.81mb/Pb_smallest_b_";
+  //inline const std::string bksolpp = "./kcbk_fit1_sigma0_18.81mb/p_smallest";
 
   // KCBK first  bal+sd solution
-  //const string bksolpp = "./dipole-kcbk-hera-bal+sd-4.61.dip";
+  //inline const std::string bksolpp = "./dipole-kcbk-hera-bal+sd-4.61.dip";
 
   // KCBK fit3 solution
-  extern const std::string bksolpp;
-  extern const std::string bksolpA; //"./KCBK_fit_3/Pb_b_";
+  inline const std::string bksolpp = "./KCBK_fit_3/proton.dat";
+  inline const std::string bksolpA = "./KCBK_fit_3/proton.dat"; //"./KCBK_fit_3/Pb_b_";
 
   // KCBK bal+sd solution
-  //const string bksolpp = "./KCBK_fit_5/proton.dat";
-  //const string bksolpA = "./KCBK_fit_5/Pb_b_";
+  //inline const std::string bksolpp = "./KCBK_fit_5/proton.dat";
+  //inline const std::string bksolpA = "./KCBK_fit_5/Pb_b_";
 
   // KCBK parent solution
-  //const string bksolpp = "./KCBK_fit_1/proton.dat";
-  //const string bksolpA = "./KCBK_fit_1/Pb_b_";
+  //inline const std::string bksolpp = "./KCBK_fit_1/proton.dat";
+  //inline const std::string bksolpA = "./KCBK_fit_1/Pb_b_";
 
   // ResumBK bal+sd solution
-  //const string bksolpp = "./ResumBK_fit_5/proton.dat";
-  //const string bksolpA = "./ResumBK_fit_5/Pb_b_";
+  //inline const std::string bksolpp = "./ResumBK_fit_5/proton.dat";
+  //inline const std::string bksolpA = "./ResumBK_fit_5/Pb_b_";
 
   // ResumBK parent solution
-  //const string bksolpp = "./ResumBK_fit_1/proton";
-  //const string bksolpA = "./ResumBK_fit_1/Pb_b_";
+  //inline const std::string bksolpp = "./ResumBK_fit_1/proton";
+  //inline const std::string bksolpA = "./ResumBK_fit_1/Pb_b_";
 
   // ResumBK first parent solution
-  //const string bksolpp = "./dipole-resumbk-hera-parent-4.61.dip";
+  //inline const std::string bksolpp = "./dipole-resumbk-hera-parent-4.61.dip";
 
   // TBK parent solution
-  //const string bksolpp = "./TBK_fit_1/proton.dat";
-  //const string bksolpA = "./TBK_fit_1/Pb_b_";
-
-  //const string bksol="/Users/tawabyx/Documents/GitHub/nlodisfit/data/dipole_resumbk_sdrc.dip";
-  //const string bksol = "/Users/tawabyx/Documents/code_NLO_sinc/Au/pA_impactb0.000000";
-  //const string bksol="bksol/Sgrid_31.dat";
-  //AmplitudeLib N(bksol);
+  //inline const std::string bksolpp = "./TBK_fit_1/proton.dat";
+  //inline const std::string bksolpA = "./TBK_fit_1/Pb_b_";
 
   // initial condition
-  //const double Qs02=0.2;
-  //const double Qs02=0.0964;  //First Pb run and ResumBK parent solution
-  //const double Qs02=0.0833;      // KCBK fit1 and parent solution
-  extern const double Qs02;      // KCBK fit3
-  //const double Qs02=0.0905;	 // KCBK bal+sd solution
-  //const double Qs02=0.0950;      // ResumBK bal+sd solution
-  //const double Qs02=0.0917;     // TBK parent (fit1) solution
-  extern const double ec;
+  //inline constexpr double Qs02 = 0.2;
+  //inline constexpr double Qs02 = 0.0964;  //First Pb run and ResumBK parent solution
+  //inline constexpr double Qs02 = 0.0833;      // KCBK fit1 and parent solution
+  inline constexpr double Qs02 = 0.0680;      // KCBK fit3
+  //inline constexpr double Qs02 = 0.0905;	 // KCBK bal+sd solution
+  //inline constexpr double Qs02 = 0.0950;      // ResumBK bal+sd solution
+  //inline constexpr double Qs02 = 0.0917;     // TBK parent (fit1) solution
+  inline constexpr double ec = 1.;
   // running coupling
-  //const running_types alpha_s_running=FIXED;
-  extern const double alpha_s_fixed; // (alpha_bar=0.2)
-  extern const double alpha_s_freeze;
-  // choice of terms
-  extern bool with_Nc;
-  extern bool with_CF;
-  extern bool with_gl;
-  extern bool with_gq;
-  extern bool with_gg;
-  /*const bool with_Nc = true;
-  const bool with_CF = true;*/
-  extern const bool with_xi1;  // True iff one wants to use the subtracted scheme (still not exactly CXY, see the paper)
-  /*const bool with_gl = false;    // Include q->g terms
-  const bool with_gq = false;   // Include g->q terms
-  const bool with_gg = false;   // Include g->g terms */
+  //inline constexpr running_types alpha_s_running = FIXED;
+  inline constexpr double alpha_s_fixed = 0.2*M_PI/3.; // (alpha_bar=0.2)
+  inline constexpr double alpha_s_freeze = 0.7;
+  // choice of terms: with_xi1 is a fixed analysis choice; with_Nc/CF/gl/gq/gg
+  // are *derived from the command line* (params::RunParameters below), since
+  // they select which parton channel (qq/qg/gq/gg) is being computed.
+  inline constexpr bool with_xi1 = false;  // True iff one wants to use the subtracted scheme (still not exactly CXY, see the paper)
   // kinematics
-  //const double SQRTS=500;    // Forward RHIC (GeV)
-  //const double SQRTS=5020;     // LHC (GeV)
-  //const double SQRTS=5000;     // LHCb pp (GeV)
-  extern const double SQRTS;     // New LHCb (GeV)
-  extern const double yh;
+  //inline constexpr double SQRTS = 500;    // Forward RHIC (GeV)
+  //inline constexpr double SQRTS = 5020;     // LHC (GeV)
+  //inline constexpr double SQRTS = 5000;     // LHCb pp (GeV)
+  inline constexpr double SQRTS = 8160;     // New LHCb (GeV)
+  inline constexpr double yh = 3;
   // PDFs
-  extern const std::string pdfname;
-  extern double mu2;
+  inline const std::string pdfname = "MSTW2008nlo90cl";
   // constants
-  extern double minlnr, maxlnr;
-  extern const int Nc, Nf;
+  inline constexpr int Nc = 3, Nf = 3;
 
-  // const double CF=4./3.;
-  extern const double CF;     // To be consistent with the large-Nc limit taken elsewhere
+  // inline constexpr double CF = 4./3.;
+  inline constexpr double CF = 3./2.;     // To be consistent with the large-Nc limit taken elsewhere
 
-  extern const double beta0;
-  extern const double c0;
-  extern const double LambdaQCD;
-  extern const double alpha_s_mu_0;
+  inline constexpr double beta0 = (11.*Nc-2.*Nf)/3.;
+  inline const double c0 = 2*std::exp(-M_EULER); // exp() isn't constexpr, so this can't be `constexpr`
+  inline constexpr double LambdaQCD = 0.241;
+  inline const double alpha_s_mu_0 = std::exp((2*M_PI)/(beta0*alpha_s_freeze));
 
-  //const int Anucleus = 197;   // Henri's Au data
-  extern const int Anucleus;   // Heikki's Pb data
+  //inline constexpr int Anucleus = 197;   // Henri's Au data
+  inline constexpr int Anucleus = 208;   // Heikki's Pb data
 
-  extern const double RA;
-  extern const double WSd;
-  extern const double sigma_inel;
-  extern const double gamm;
-  //const double sigma0 = 50.2628683108;   // Henri's Au data
-  //const double sigma0 = 96.6153078;        // ResumBK and old KCBK data
-  extern const double sigma0;          // KCBK fit3
-  //const double sigma0 = 44.5837784;      // KCBK bal+sd
-  //const double sigma0 = 50.0283412;        // KCBK parent
-  //const double sigma0 = 39.3446708;        // ResumBK parent
-  //const double sigma0 = 40.320583;      // ResumBK bal+sd
-  //const double sigma0 = 31.7941922;        // TBK parent (fit1)
-  extern double TA;
+  inline const double RA = (1.12 * std::pow(Anucleus, 1/3)) + (0.86 * std::pow(Anucleus, -1/3));
+  inline constexpr double WSd = 0.54;
+  inline constexpr double sigma_inel = 179.7733;
+  inline constexpr double gamm = 1.21;
+  //inline constexpr double sigma0 = 50.2628683108;   // Henri's Au data
+  //inline constexpr double sigma0 = 96.6153078;        // ResumBK and old KCBK data
+  inline constexpr double sigma0 = 94.4580282;          // KCBK fit3
+  //inline constexpr double sigma0 = 44.5837784;      // KCBK bal+sd
+  //inline constexpr double sigma0 = 50.0283412;        // KCBK parent
+  //inline constexpr double sigma0 = 39.3446708;        // ResumBK parent
+  //inline constexpr double sigma0 = 40.320583;      // ResumBK bal+sd
+  //inline constexpr double sigma0 = 31.7941922;        // TBK parent (fit1)
 
-  extern const std::string TAfile;     // Pb
+  inline const std::string TAfile = "./TAvalues_Pb_Heikki.dat";     // Pb
 
   // intde parameters
-  extern const double epsrel_intde;
+  inline constexpr double epsrel_intde = 1e-4;
   // gsl parameters
-  extern const int gsl_maxpoints;
-  extern const double epsabs_gsl, epsrel_gsl;
+  inline constexpr int gsl_maxpoints = 1000;
+  inline constexpr double epsabs_gsl = 1e-8, epsrel_gsl = 1e-6;
 
-  // input parameters
-  extern std::string col;
-  extern double b;
-  extern double p;
-  extern std::string incoming;
-  extern std::string outgoing;
-  extern running_types alpha_s_running;
+  // Everything above is fixed for the life of the program. Everything below
+  // is derived once from the command line (main.cpp) and then read-only for
+  // the rest of the run -- built by parse_run_parameters() and passed as
+  // `const RunParameters&` through the call graph instead of being reached
+  // via a blanket `using namespace params;` the way it used to be.
+  struct RunParameters{
+    std::string col;
+    double b;
+    double p;
+    std::string incoming;
+    std::string outgoing;
+    running_types alpha_s_running;
+    double mu2;
+    double TA;              // params::TAfile row matching b
+    bool with_Nc;
+    bool with_CF;
+    bool with_gl;
+    bool with_gq;
+    bool with_gg;
+  };
+
+  // Looks up TA for the given impact parameter b in params::TAfile.
+  double lookup_TA(double b);
+
+  // Parses the "rc" command-line token ("fixed"/"mom"/"parent"/"daughter"/
+  // "mixed"/"mixedbd"/"smallest") into a running_types value. Prints a
+  // warning and defaults to FIXED on an unrecognized token, matching the
+  // original (silent, zero-initialization-based) fallback exactly.
+  running_types parse_alpha_s_running(const std::string& rc);
+
+  // Builds a RunParameters from the already-parsed CLI fields: looks up TA
+  // via lookup_TA(b), and derives with_Nc/with_CF/with_gl/with_gq/with_gg
+  // from incoming/outgoing.
+  RunParameters make_run_parameters(std::string col, double b, double p,
+                                     std::string incoming, std::string outgoing,
+                                     running_types alpha_s_running, double mu2);
 }

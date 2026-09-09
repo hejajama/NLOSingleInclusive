@@ -90,7 +90,7 @@ double JJv_xi1_interp(double r, double y){
 }
 
 
-void init_xi_interp(double xg){
+void init_xi_interp(const params::RunParameters& rp, double xg){
   using namespace amplitude;
   using namespace interp_xi;
   using namespace params;
@@ -176,16 +176,16 @@ void init_xi_interp(double xg){
 #pragma omp parallel for schedule(dynamic)
     for(int j=0; j<rpoints; j++){
       double r=rvals[j];
-      double I2_tmp=(with_CF ? I2(r,xi) : 0);
-      double J_tmp=(with_Nc ? J(r,xi) : 0);
-      double J1_tmp=(with_gl ? J1(r,xi) : 0);
-      double H2_tmp=(with_gg ? H2(r,xi) : 0);
-      double H3_tmp=(with_gg ? H3(r,xi) : 0);
-      double H5_tmp=(with_gg ? H5(r,xi) : 0);
-      double K3_tmp=(with_gq ? K3(r,xi) : 0);
-      double Jv_tmp=(with_Nc ? Jv(r,xi) : 0);
-      double Jv2_tmp=(with_Nc ? Jv2(r,xi) : 0);
-      double JJv_xi1_tmp=(with_xi1 ? JJv_xi1(r) : 0);
+      double I2_tmp=(rp.with_CF ? I2(rp,r,xi) : 0);
+      double J_tmp=(rp.with_Nc ? J(rp,r,xi) : 0);
+      double J1_tmp=(rp.with_gl ? J1(rp,r,xi) : 0);
+      double H2_tmp=(rp.with_gg ? H2(rp,r,xi) : 0);
+      double H3_tmp=(rp.with_gg ? H3(rp,r,xi) : 0);
+      double H5_tmp=(rp.with_gg ? H5(rp,r,xi) : 0);
+      double K3_tmp=(rp.with_gq ? K3(rp,r,xi) : 0);
+      double Jv_tmp=(rp.with_Nc ? Jv(rp,r,xi) : 0);
+      double Jv2_tmp=(rp.with_Nc ? Jv2(rp,r,xi) : 0);
+      double JJv_xi1_tmp=(with_xi1 ? JJv_xi1(rp,r) : 0);
       gsl_spline2d_set(spline_I2,I2_vals,j,i,I2_tmp);
       gsl_spline2d_set(spline_J,J_vals,j,i,J_tmp);
       gsl_spline2d_set(spline_J1,J1_vals,j,i,J1_tmp);

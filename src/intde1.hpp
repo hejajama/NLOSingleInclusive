@@ -14,7 +14,12 @@ functions
                  f(x) is oscillatory function.
 
 Third-party numerics (Ooura's DE-quadrature), unrelated to the physics in
-the rest of this codebase -- kept as-is, just given a proper header.
+the rest of this codebase -- kept as-is algorithmically. The only change
+from the original is that f now also receives a `void *userdata` context
+pointer, mirroring GSL's own gsl_function convention (already used
+elsewhere in this codebase) instead of forcing every caller to smuggle
+its inputs through file-scope globals. Pass nullptr if the integrand
+needs no context.
 */
 
 /*
@@ -22,17 +27,18 @@ intde
     [description]
         I = integral of f(x) over (a,b)
     [declaration]
-        void intde(double (*f)(double), double a, double b, double eps,
-            double *i, double *err);
+        void intde(double (*f)(double, void*), double a, double b, double eps,
+            double *i, double *err, void *userdata);
     [usage]
-        intde(f, a, b, eps, &i, &err);
+        intde(f, a, b, eps, &i, &err, userdata);
     [parameters]
-        f         : integrand f(x) (double (*f)(double))
+        f         : integrand f(x, userdata) (double (*f)(double, void*))
         a         : lower limit of integration (double)
         b         : upper limit of integration (double)
         eps       : relative error requested (double)
         i         : approximation to the integral (double *)
         err       : estimate of the absolute error (double *)
+        userdata  : context pointer passed through to f unchanged (void *)
     [remarks]
         function
             f(x) needs to be analytic over (a,b).
@@ -57,8 +63,8 @@ intde
                               and frequency of the oscillation
                               is very high.
 */
-void intde(double (*f)(double), double a, double b, double eps,
-    double *i, double *err);
+void intde(double (*f)(double, void*), double a, double b, double eps,
+    double *i, double *err, void *userdata = nullptr);
 
 /*
 intdei
@@ -66,16 +72,17 @@ intdei
         I = integral of f(x) over (a,infinity),
             f(x) has not oscillatory factor.
     [declaration]
-        void intdei(double (*f)(double), double a, double eps,
-            double *i, double *err);
+        void intdei(double (*f)(double, void*), double a, double eps,
+            double *i, double *err, void *userdata);
     [usage]
-        intdei(f, a, eps, &i, &err);
+        intdei(f, a, eps, &i, &err, userdata);
     [parameters]
-        f         : integrand f(x) (double (*f)(double))
+        f         : integrand f(x, userdata) (double (*f)(double, void*))
         a         : lower limit of integration (double)
         eps       : relative error requested (double)
         i         : approximation to the integral (double *)
         err       : estimate of the absolute error (double *)
+        userdata  : context pointer passed through to f unchanged (void *)
     [remarks]
         function
             f(x) needs to be analytic over (a,infinity).
@@ -100,8 +107,8 @@ intdei
                               and decay of f(x) is very slow
                               as x -> infinity.
 */
-void intdei(double (*f)(double), double a, double eps,
-    double *i, double *err);
+void intdei(double (*f)(double, void*), double a, double eps,
+    double *i, double *err, void *userdata = nullptr);
 
 /*
 intdeo
@@ -110,17 +117,18 @@ intdeo
             f(x) has oscillatory factor :
             f(x) = g(x) * sin(omega * x + theta) as x -> infinity.
     [declaration]
-        void intdeo(double (*f)(double), double a, double omega,
-            double eps, double *i, double *err);
+        void intdeo(double (*f)(double, void*), double a, double omega,
+            double eps, double *i, double *err, void *userdata);
     [usage]
-        intdeo(f, a, omega, eps, &i, &err);
+        intdeo(f, a, omega, eps, &i, &err, userdata);
     [parameters]
-        f         : integrand f(x) (double (*f)(double))
+        f         : integrand f(x, userdata) (double (*f)(double, void*))
         a         : lower limit of integration (double)
         omega     : frequency of oscillation (double)
         eps       : relative error requested (double)
         i         : approximation to the integral (double *)
         err       : estimate of the absolute error (double *)
+        userdata  : context pointer passed through to f unchanged (void *)
     [remarks]
         function
             f(x) needs to be analytic over (a,infinity).
@@ -137,10 +145,8 @@ intdeo
                            1. f(x) or (d/dx)^n f(x) has
                               discontinuous points or sharp
                               peaks over (a,infinity).
-                              you must divide the interval
-                              (a,infinity) at this points.
                            2. relative error of f(x) is
                               greater than eps.
 */
-void intdeo(double (*f)(double), double a, double omega, double eps,
-    double *i, double *err);
+void intdeo(double (*f)(double, void*), double a, double omega, double eps,
+    double *i, double *err, void *userdata = nullptr);

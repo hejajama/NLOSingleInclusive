@@ -12,45 +12,48 @@
 
 using namespace params;
 
-namespace sigma_NLO_k_tmp{
-  double k_tmp, xp_tmp;
+namespace {
+  // Context threaded through integrand_sigma_NLO_k via intdeo's userdata
+  // pointer (see sigma_LO.cpp for why this is needed at all).
+  struct SigmaNLOContext{
+    const RunParameters *rp;
+    double k;
+    double xp;
+  };
 }
 
 
-double sigma_NLO_r(double r, double k, double xp){
-  using namespace params;
+double sigma_NLO_r(const RunParameters& rp, double r, double k, double xp){
   double res = 0;
-  if(with_Nc || with_CF){
-      res += xf(xp,mu2)*Sr_0(r);
+  if(rp.with_Nc || rp.with_CF){
+      res += xf(rp,xp,rp.mu2)*Sr_0(rp,r);
   }
-  if(with_gg){
-      res += xf(xp,mu2)*Sq(Sr_0(r));
+  if(rp.with_gg){
+      res += xf(rp,xp,rp.mu2)*Sq(Sr_0(rp,r));
   }
   double as;
-  if(alpha_s_running==FIXED){
+  if(rp.alpha_s_running==FIXED){
     as=alpha_s_fixed;
-  }else if(alpha_s_running==MOM){
-    as=alpha_s_mom(mu2);
+  }else if(rp.alpha_s_running==MOM){
+    as=alpha_s_mom(rp.mu2);
   }else{
     as=1;
   }
-   if(with_Nc || with_xi1 || with_CF || with_gl || with_gq || with_gg) res+=as*xi_int_interp(r);
+   if(rp.with_Nc || with_xi1 || rp.with_CF || rp.with_gl || rp.with_gq || rp.with_gg) res+=as*xi_int_interp(r);
   return res;
 }
 
 
-double integrand_sigma_NLO_k(double r){
-  using namespace sigma_NLO_k_tmp;
-  return r*gsl_sf_bessel_J0(k_tmp*r)*sigma_NLO_r(r,k_tmp,xp_tmp);
+double integrand_sigma_NLO_k(double r, void *userdata){
+  const SigmaNLOContext &ctx = *static_cast<SigmaNLOContext*>(userdata);
+  return r*gsl_sf_bessel_J0(ctx.k*r)*sigma_NLO_r(*ctx.rp,r,ctx.k,ctx.xp);
 }
 
 
-double sigma_NLO_k(double k, double xp){
-  using namespace sigma_NLO_k_tmp;
-  k_tmp=k;
-  xp_tmp=xp;
+double sigma_NLO_k(const RunParameters& rp, double k, double xp){
+  SigmaNLOContext ctx{&rp, k, xp};
   double integral, error;
-  intdeo(integrand_sigma_NLO_k,0,k,epsrel_intde,&integral,&error);
+  intdeo(integrand_sigma_NLO_k,0,k,epsrel_intde,&integral,&error,&ctx);
   return integral/(2*M_PI);
 }
 

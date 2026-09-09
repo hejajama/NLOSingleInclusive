@@ -11,35 +11,39 @@
 
 using namespace params;
 
-namespace sigma_LO_k_tmp{
-  double k_tmp, xp_tmp;
+namespace {
+  // Context threaded through integrand_sigma_LO_k via intdeo's userdata
+  // pointer (intdeo's f has no userdata slot of its own to smuggle k/xp
+  // through otherwise, unlike GSL's own gsl_function convention).
+  struct SigmaLOContext{
+    const RunParameters *rp;
+    double k;
+    double xp;
+  };
 }
 
 
-double sigma_LO_r(double r, double xp){
-  using namespace params;
-  if(with_Nc||with_CF){
-    return xf(xp,mu2)*Sr_interp_1D(r);
+double sigma_LO_r(const RunParameters& rp, double r, double xp){
+  if(rp.with_Nc||rp.with_CF){
+    return xf(rp,xp,rp.mu2)*Sr_interp_1D(r);
   }
-  else if(with_gg){
-    return xf(xp,mu2)*Sq(Sr_interp_1D(r));
+  else if(rp.with_gg){
+    return xf(rp,xp,rp.mu2)*Sq(Sr_interp_1D(r));
   }
   return 0;
 }
 
 
-double integrand_sigma_LO_k(double r){
-  using namespace sigma_LO_k_tmp;
-  return r*gsl_sf_bessel_J0(k_tmp*r)*sigma_LO_r(r,xp_tmp);
+double integrand_sigma_LO_k(double r, void *userdata){
+  const SigmaLOContext &ctx = *static_cast<SigmaLOContext*>(userdata);
+  return r*gsl_sf_bessel_J0(ctx.k*r)*sigma_LO_r(*ctx.rp,r,ctx.xp);
 }
 
 
-double sigma_LO_k(double k, double xp){
-  using namespace sigma_LO_k_tmp;
-  k_tmp=k;
-  xp_tmp=xp;
+double sigma_LO_k(const RunParameters& rp, double k, double xp){
+  SigmaLOContext ctx{&rp, k, xp};
   double integral, error;
-  intdeo(integrand_sigma_LO_k,0,k,epsrel_intde,&integral,&error);
+  intdeo(integrand_sigma_LO_k,0,k,epsrel_intde,&integral,&error,&ctx);
   return integral/(2*M_PI);
 }
 

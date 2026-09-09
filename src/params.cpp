@@ -1,59 +1,86 @@
 #include "params.hpp"
+#include "utils.hpp"
 
-#include "gsl/gsl_math.h"
-#include <cmath>
+#include <cstdlib>
+#include <fstream>
+#include <iostream>
+
+using namespace std;
 
 namespace params{
-  const std::string bksolpp = "./KCBK_fit_3/proton.dat";
-  const std::string bksolpA = "./KCBK_fit_3/proton.dat";
 
-  const double Qs02=0.0680;
-  const double ec=1.;
-  const double alpha_s_fixed=0.2*M_PI/3.;
-  const double alpha_s_freeze=0.7;
+double lookup_TA(double b){
+  ifstream datafile(TAfile.c_str());
+  if(!datafile.is_open()){
+    cerr << "Error opening the TA file" << endl;
+    exit(1);
+  }
+  double TA = 0;
+  while(!datafile.eof()){
+    string line;
+    getline(datafile, line);
+    if(line.size() == 0){
+      break;
+    }
+    int loc = 0;
+    while(line.compare(loc,1,",") != 0){
+      loc++;
+    }
+    double this_b = str_to_double(line.substr(0, loc));
+    if(this_b == b){
+      TA = str_to_double(line.substr(loc+1, line.size()-loc-1));
+      break;
+    }
+  }
+  datafile.close();
+  return TA;
+}
 
-  bool with_Nc = false;
-  bool with_CF = false;
-  bool with_gl = false;
-  bool with_gq = false;
-  bool with_gg = false;
-  const bool with_xi1 = false;
 
-  const double SQRTS=8160;
-  const double yh=3;
+running_types parse_alpha_s_running(const string& rc){
+  if(rc.compare("fixed") == 0) return FIXED;
+  else if(rc.compare("mom") == 0) return MOM;
+  else if(rc.compare("parent") == 0) return PARENT;
+  else if(rc.compare("daughter") == 0) return DAUGHTER;
+  else if(rc.compare("mixed") == 0) return MIXED;
+  else if(rc.compare("mixedbd") == 0) return MIXEDBD;
+  else if(rc.compare("smallest") == 0) return SMALLEST;
+  cout << "Invalid running coupling choice." << endl;
+  return FIXED;
+}
 
-  const std::string pdfname="MSTW2008nlo90cl";
-  double mu2;
 
-  double minlnr, maxlnr;
-  const int Nc=3, Nf=3;
+RunParameters make_run_parameters(string col, double b, double p,
+                                   string incoming, string outgoing,
+                                   running_types alpha_s_running, double mu2){
+  RunParameters rp;
+  rp.col = col;
+  rp.b = b;
+  rp.p = p;
+  rp.incoming = incoming;
+  rp.outgoing = outgoing;
+  rp.alpha_s_running = alpha_s_running;
+  rp.mu2 = mu2;
+  rp.TA = lookup_TA(b);
 
-  const double CF=3./2.;
+  rp.with_Nc = false;
+  rp.with_CF = false;
+  rp.with_gl = false;
+  rp.with_gq = false;
+  rp.with_gg = false;
+  if(incoming.compare("g") == 0){
+    if(outgoing.compare("g") == 0) rp.with_gg = true;
+    else rp.with_gq = true;
+  }
+  else{
+    if(outgoing.compare("g") == 0) rp.with_gl = true;
+    else{
+      rp.with_Nc = true;
+      rp.with_CF = true;
+    }
+  }
 
-  const double beta0=(11.*Nc-2.*Nf)/3.;
-  const double c0=2*exp(-M_EULER);
-  const double LambdaQCD=0.241;
-  const double alpha_s_mu_0=exp((2*M_PI)/(beta0*alpha_s_freeze));
+  return rp;
+}
 
-  const int Anucleus = 208;
-
-  const double RA = (1.12 * pow(Anucleus, 1/3)) + (0.86 * pow(Anucleus, -1/3));
-  const double WSd = 0.54;
-  const double sigma_inel = 179.7733;
-  const double gamm = 1.21;
-  const double sigma0 = 94.4580282;
-  double TA;
-
-  const std::string TAfile = "./TAvalues_Pb_Heikki.dat";
-
-  const double epsrel_intde=1e-4;
-  const int gsl_maxpoints=1000;
-  const double epsabs_gsl=1e-8, epsrel_gsl=1e-6;
-
-  std::string col;
-  double b;
-  double p;
-  std::string incoming;
-  std::string outgoing;
-  running_types alpha_s_running;
 }

@@ -4,8 +4,8 @@
 
 #include <math.h>
 
-void intde(double (*f)(double), double a, double b, double eps,
-    double *i, double *err)
+void intde(double (*f)(double, void*), double a, double b, double eps,
+    double *i, double *err, void *userdata)
 {
     /* ---- adjustable parameter ---- */
     int mmax = 256;
@@ -23,7 +23,7 @@ void intde(double (*f)(double), double a, double b, double eps,
     ehm = 1 / ehp;
     epst = exp(-ehm * epsln);
     ba = b - a;
-    ir = (*f)((a + b) * 0.5) * (ba * 0.25);
+    ir = (*f)((a + b) * 0.5, userdata) * (ba * 0.25);
     *i = ir * (2 * pi2);
     *err = fabs(*i) * epst;
     h = 2 * h0;
@@ -40,8 +40,8 @@ void intde(double (*f)(double), double a, double b, double eps,
                 xw = 1 / (1 + exp(ep - em));
                 xa = ba * xw;
                 wg = xa * (1 - xw);
-                fa = (*f)(a + xa) * wg;
-                fb = (*f)(b - xa) * wg;
+                fa = (*f)(a + xa, userdata) * wg;
+                fb = (*f)(b - xa, userdata) * wg;
                 ir += fa + fb;
                 *i += (fa + fb) * (ep + em);
                 errt = (fabs(fa) + fabs(fb)) * (ep + em);
@@ -70,8 +70,8 @@ void intde(double (*f)(double), double a, double b, double eps,
 
 
 
-void intdei(double (*f)(double), double a, double eps,
-    double *i, double *err)
+void intdei(double (*f)(double, void*), double a, double eps,
+    double *i, double *err, void *userdata)
 {
     /* ---- adjustable parameter ---- */
     int mmax = 256;
@@ -88,7 +88,7 @@ void intdei(double (*f)(double), double a, double eps,
     ehp = exp(h0);
     ehm = 1 / ehp;
     epst = exp(-ehm * epsln);
-    ir = (*f)(a + 1);
+    ir = (*f)(a + 1, userdata);
     *i = ir * (2 * pi4);
     *err = fabs(*i) * epst;
     h = 2 * h0;
@@ -104,8 +104,8 @@ void intdei(double (*f)(double), double a, double eps,
             do {
                 xp = exp(ep - em);
                 xm = 1 / xp;
-                fp = (*f)(a + xp) * xp;
-                fm = (*f)(a + xm) * xm;
+                fp = (*f)(a + xp, userdata) * xp;
+                fm = (*f)(a + xm, userdata) * xm;
                 ir += fp + fm;
                 *i += (fp + fm) * (ep + em);
                 errt = (fabs(fp) + fabs(fm)) * (ep + em);
@@ -134,8 +134,8 @@ void intdei(double (*f)(double), double a, double eps,
 
 
 
-void intdeo(double (*f)(double), double a, double omega, double eps,
-    double *i, double *err)
+void intdeo(double (*f)(double, void*), double a, double omega, double eps,
+    double *i, double *err, void *userdata)
 {
     /* ---- adjustable parameter ---- */
     int mmax = 256, lmax = 5;
@@ -156,7 +156,7 @@ void intdeo(double (*f)(double), double a, double omega, double eps,
     ehp = exp(2 * pq);
     ehm = 1 / ehp;
     xw = exp(pp - 2 * pi4);
-    *i = (*f)(a + sqrt(xw * (per2 * 0.5)));
+    *i = (*f)(a + sqrt(xw * (per2 * 0.5)), userdata);
     ir = *i * xw;
     *i *= per2 * 0.5;
     *err = fabs(*i);
@@ -176,8 +176,8 @@ void intdeo(double (*f)(double), double a, double omega, double eps,
                 wg = sqrt(frq4 * xw + tk * tk);
                 xa = xw / (tk + wg);
                 wg = (pq * xw * (ep - em) + xa) / wg;
-                fm = (*f)(a + xa);
-                fp = (*f)(a + xa + per2 * tk);
+                fm = (*f)(a + xa, userdata);
+                fp = (*f)(a + xa + per2 * tk, userdata);
                 ir += (fp + fm) * xw;
                 fm *= wg;
                 fp *= per2 - wg;
@@ -196,7 +196,7 @@ void intdeo(double (*f)(double), double a, double omega, double eps,
                 xw = exp(pp - ep - em);
                 xa = xw / tk * 0.5;
                 wg = xa * (1 / tk + 2 * pq * (ep - em));
-                fm = (*f)(a + xa);
+                fm = (*f)(a + xa, userdata);
                 ir += fm * xw;
                 fm *= wg;
                 *i += fm;
@@ -204,7 +204,7 @@ void intdeo(double (*f)(double), double a, double omega, double eps,
                 em *= ehm;
                 tk += 1;
             }
-            fm = (*f)(a + per2 * tn);
+            fm = (*f)(a + per2 * tn, userdata);
             em = per2 * fm;
             *i += em;
             if (fabs(fp) > *err || fabs(em) > *err) {
@@ -213,7 +213,7 @@ void intdeo(double (*f)(double), double a, double omega, double eps,
                     l++;
                     tn += n;
                     em = fm;
-                    fm = (*f)(a + per2 * tn);
+                    fm = (*f)(a + per2 * tn, userdata);
                     xa = fm;
                     ep = fm;
                     em += fm;
@@ -222,7 +222,7 @@ void intdeo(double (*f)(double), double a, double omega, double eps,
                     for (k = 1; k <= n - 1; k++) {
                         xw = xw * (n + 1 - k) / k;
                         wg += xw;
-                        fp = (*f)(a + per2 * (tn - k));
+                        fp = (*f)(a + per2 * (tn - k), userdata);
                         xa += fp;
                         ep += fp * wg;
                         em += fp * xw;

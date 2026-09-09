@@ -15,10 +15,9 @@
 using namespace std;
 using namespace params;
 
- double Sr_0(double r){
-     using namespace params;
-     if(col.compare("pA") == 0){
-         return exp(-0.125*sigma0*Anucleus*TA*pow(Sq(r)*Qs02,gamm)*log(1/(r*LambdaQCD)+ec*M_E));
+double Sr_0(const RunParameters& rp, double r){
+     if(rp.col.compare("pA") == 0){
+         return exp(-0.125*sigma0*Anucleus*rp.TA*pow(Sq(r)*Qs02,gamm)*log(1/(r*LambdaQCD)+ec*M_E));
      }
      return exp(-0.25*pow(Sq(r)*Qs02,gamm)*log(1/(r*LambdaQCD)+ec*M_E));
 }
@@ -34,6 +33,7 @@ double Sr_0(double r){
 
 namespace amplitude{
   double minr, maxr, r_mult, x0, Y0threshold;
+  double minlnr, maxlnr;
   int rpoints, ypoints;
   double *yvals, *rvals;
   vector<vector <double> > Sr;  // Sr[Y][r]=S(Y,r)
@@ -74,17 +74,16 @@ void read_bkgrid(vector<double>& yvals_tmp){
 
 
 
-void read_bkgrid(vector<double>& yvals_tmp){
+void read_bkgrid(const RunParameters& rp, vector<double>& yvals_tmp){
     using namespace amplitude;
-    using namespace params;
 
     string bksol;
-    if(col.compare("pA") == 0){
-        if(b < 10){
-            bksol = bksolpA + to_string(b).substr(0,1);
+    if(rp.col.compare("pA") == 0){
+        if(rp.b < 10){
+            bksol = bksolpA + to_string(rp.b).substr(0,1);
         }
         else{
-            bksol = bksolpA + to_string(b).substr(0,2);
+            bksol = bksolpA + to_string(rp.b).substr(0,2);
         }
     }
     else{
@@ -145,12 +144,12 @@ void read_bkgrid(vector<double>& yvals_tmp){
 
 
 
-void init_bksol(){
+void init_bksol(const RunParameters& rp){
   using namespace amplitude;
 
   vector<double> yvals_tmp;
 
-  read_bkgrid(yvals_tmp);
+  read_bkgrid(rp, yvals_tmp);
   ypoints=yvals_tmp.size();
 
   yvals=new double[ypoints];
