@@ -1,9 +1,6 @@
-#include "func.hpp"
+#include "nlo_coefficients.hpp"
 
-#include "Sr_interp_1D.hpp"
-#include "bksol_nlodisfit.hpp"
 #include "common.hpp"
-#include "params.hpp"
 #include "utils.hpp"
 
 #include <algorithm>
@@ -13,16 +10,13 @@
 using namespace std;
 using namespace params;
 
-namespace func_tmp{
-  gsl_integration_workspace *w_x, *w_phi;
-#pragma omp threadprivate(w_x,w_phi)
-}
-
 namespace {
   // Context threaded through the phi/x double integral's GSL callbacks
   // (integrand_phi sets phi; integrand_x reads everything).
   struct IntegrandContext{
+    NLOCoefficients *self;
     const RunParameters *rp;
+    const DipoleAmplitude1DSlice *sr1d;
     double r;
     double xi;
     double phi;
@@ -31,9 +25,24 @@ namespace {
 }
 
 
-double integrand_x(double lnx, void *userdata){
+NLOCoefficients::NLOCoefficients(const DipoleAmplitude& dipole)
+  : minlnr_(dipole.min_ln_r()), maxlnr_(dipole.max_ln_r())
+{
+  w_x_ = gsl_integration_workspace_alloc(gsl_maxpoints);
+  w_phi_ = gsl_integration_workspace_alloc(gsl_maxpoints);
+}
+
+
+NLOCoefficients::~NLOCoefficients(){
+  gsl_integration_workspace_free(w_x_);
+  gsl_integration_workspace_free(w_phi_);
+}
+
+
+double NLOCoefficients::integrand_x(double lnx, void *userdata){
   const IntegrandContext &ctx = *static_cast<IntegrandContext*>(userdata);
   const RunParameters &rp = *ctx.rp;
+  const DipoleAmplitude1DSlice &sr1d = *ctx.sr1d;
   double r=ctx.r;
   double xi=ctx.xi;
   double phi=ctx.phi;
@@ -48,7 +57,7 @@ double integrand_x(double lnx, void *userdata){
     // K3
     double dip1 = sqrt(r2 + Sq(1-xi)*x2 + 2*(1-xi)*sprx);
     double K = (x2+sprx)/(x2*rpx2);
-    res = 2 * exp(2*lnx) * K * Sr_interp_1D(xi*x) * Sr_interp_1D(dip1);
+    res = 2 * exp(2*lnx) * K * sr1d(xi*x) * sr1d(dip1);
     if(rp.alpha_s_running==DAUGHTER){
       res*=alpha_s_pos(x);
     }
@@ -63,7 +72,7 @@ double integrand_x(double lnx, void *userdata){
     // H5
     double dip1 = sqrt(r2 + Sq(xi)*x2 - 2*xi*sprx);
     double dip2 = sqrt(r2 + Sq(1-xi)*x2 + 2*(1-xi)*sprx);
-    res = 2 * (Sr_interp_1D(dip2) * Sr_interp_1D(dip1) - Sq(Sr_interp_1D(dip2)));
+    res = 2 * (sr1d(dip2) * sr1d(dip1) - Sq(sr1d(dip2)));
     if(rp.alpha_s_running==DAUGHTER){
       res*=alpha_s_pos(x);
     }
@@ -73,7 +82,7 @@ double integrand_x(double lnx, void *userdata){
     double dip1 = sqrt(r2 + Sq(xi)*x2 + 2*xi*sprx);
     double dip2 = sqrt(r2 + Sq(1-xi)*x2 - 2*(1-xi)*sprx);
     double dip3 = sqrt(r2 + Sq(1-xi)*x2 + 2*(1-xi)*sprx);
-    res = 4 * (Sr_interp_1D(x) * Sr_interp_1D(dip1) * Sr_interp_1D(dip2) - Sq(Sr_interp_1D(dip3)));
+    res = 4 * (sr1d(x) * sr1d(dip1) * sr1d(dip2) - Sq(sr1d(dip3)));
     if(rp.alpha_s_running==DAUGHTER){
       res*=alpha_s_pos(x);
     }
@@ -83,7 +92,7 @@ double integrand_x(double lnx, void *userdata){
     double dip1 = sqrt(Sq(xi)*rpx2);
     double dip2 = sqrt(Sq(xi)*r2 + Sq(1-xi)*x2 - 2*xi*(1-xi)*sprx);
     double K = (x2+sprx)/(x2*rpx2);
-    res = 8 * exp(2*lnx) * K * Sr_interp_1D(x) * Sr_interp_1D(dip1) * Sr_interp_1D(dip2);
+    res = 8 * exp(2*lnx) * K * sr1d(x) * sr1d(dip1) * sr1d(dip2);
     if(rp.alpha_s_running==DAUGHTER){
       res*=alpha_s_pos(x);
     }
@@ -98,7 +107,7 @@ double integrand_x(double lnx, void *userdata){
     // J1
     double dip1 = sqrt(Sq(xi)*r2+Sq(1-xi)*x2-2*xi*(1-xi)*sprx);
     double K = (x2+sprx)/(x2*rpx2);
-    res = 2 * exp(2*lnx) * K * Sr_interp_1D(x) * Sr_interp_1D(dip1);
+    res = 2 * exp(2*lnx) * K * sr1d(x) * sr1d(dip1);
       /*
     if(alpha_s_running==MIXED){
       res*=alpha_s_pos(min(xi*x,xi*sqrt(rpx2)));
@@ -113,7 +122,7 @@ double integrand_x(double lnx, void *userdata){
     double dip1=sqrt(Sq(xi)*r2+Sq(1-xi)*x2-2*xi*(1-xi)*sprx);
     double dip2=sqrt(rpx2);
     double K=(x2+sprx)/(x2*rpx2);
-    res=exp(2*lnx)*K*Sr_interp_1D(dip1);
+    res=exp(2*lnx)*K*sr1d(dip1);
     if(rp.alpha_s_running==PARENT){
       res*=alpha_s_pos(r);
     }
@@ -128,33 +137,33 @@ double integrand_x(double lnx, void *userdata){
     double dip3=sqrt(rpx2);
     double K=(x2+sprx)/(x2*rpx2);
     if(rp.alpha_s_running==PARENT){
-      res=alpha_s_pos(r)*exp(2*lnx)*K*(Sr_interp_1D(dip1)-Sr_interp_1D(dip2)*Sr_interp_1D(dip3));
+      res=alpha_s_pos(r)*exp(2*lnx)*K*(sr1d(dip1)-sr1d(dip2)*sr1d(dip3));
     }
     else if(rp.alpha_s_running==DAUGHTER){
-      res=alpha_s_pos(x)*exp(2*lnx)*K*(Sr_interp_1D(dip1)-Sr_interp_1D(dip2)*Sr_interp_1D(dip3));
+      res=alpha_s_pos(x)*exp(2*lnx)*K*(sr1d(dip1)-sr1d(dip2)*sr1d(dip3));
     }
     else if(rp.alpha_s_running==SMALLEST){
-      res=exp(2*lnx)*K*(alpha_s_pos(x)*Sr_interp_1D(dip1)-alpha_s_pos(min(r, min(xi*x, xi*dip3)))*Sr_interp_1D(dip2)*Sr_interp_1D(dip3));
+      res=exp(2*lnx)*K*(alpha_s_pos(x)*sr1d(dip1)-alpha_s_pos(min(r, min(xi*x, xi*dip3)))*sr1d(dip2)*sr1d(dip3));
     }
     else if(rp.alpha_s_running==MIXED){
-      res=exp(2*lnx)*K*alpha_s_pos(min(xi*x,xi*dip3))*(Sr_interp_1D(dip1)-Sr_interp_1D(dip2)*Sr_interp_1D(dip3));
+      res=exp(2*lnx)*K*alpha_s_pos(min(xi*x,xi*dip3))*(sr1d(dip1)-sr1d(dip2)*sr1d(dip3));
     }
     else if(rp.alpha_s_running==MIXEDBD){
-      res=exp(2*lnx)*K*alpha_s_pos(x)*(Sr_interp_1D(dip1)-Sr_interp_1D(dip2)*Sr_interp_1D(dip3));
+      res=exp(2*lnx)*K*alpha_s_pos(x)*(sr1d(dip1)-sr1d(dip2)*sr1d(dip3));
     }
     else{
-      res=exp(2*lnx)*K*(Sr_interp_1D(dip1)-Sr_interp_1D(dip2)*Sr_interp_1D(dip3));
+      res=exp(2*lnx)*K*(sr1d(dip1)-sr1d(dip2)*sr1d(dip3));
     }
 
   }else if(flag>-0.5){
     // J-Jv(xi=1)
     double K;
-    if(x<amplitude::minr/10 || sqrt(rpx2)<amplitude::minr/10){
+    if(x<sr1d.min_r()/10 || sqrt(rpx2)<sr1d.min_r()/10){
       K=0;
     }else{
       K=r2/(x2*rpx2+1e-20);
     }
-    res=exp(2*lnx)*K*(Sr_interp_1D(x)*Sr_interp_1D(sqrt(rpx2))-Sr_interp_1D(r));
+    res=exp(2*lnx)*K*(sr1d(x)*sr1d(sqrt(rpx2))-sr1d(r));
     if(rp.alpha_s_running==DAUGHTER){
       res*=alpha_s_pos(x);
     }
@@ -166,27 +175,27 @@ double integrand_x(double lnx, void *userdata){
     double K=1/x2;
     if(rp.alpha_s_running==PARENT){
       // take 1
-      res=exp(2*lnx)*K*(alpha_s_pos(dip1)*Sr_interp_1D(dip1) - alpha_s_pos(r)*Sr_interp_1D(dip2)*Sr_interp_1D(dip3));
+      res=exp(2*lnx)*K*(alpha_s_pos(dip1)*sr1d(dip1) - alpha_s_pos(r)*sr1d(dip2)*sr1d(dip3));
       // take 2
-      //res=exp(2*lnx)*K*alpha_s_pos(r)*(Sr_interp_1D(dip1) - Sr_interp_1D(dip2)*Sr_interp_1D(dip3));
+      //res=exp(2*lnx)*K*alpha_s_pos(r)*(sr1d(dip1) - sr1d(dip2)*sr1d(dip3));
     }
     else if(rp.alpha_s_running==DAUGHTER){
-      res=exp(2*lnx)*K*(alpha_s_pos(dip1)*Sr_interp_1D(dip1) - alpha_s_pos(x)*Sr_interp_1D(dip2)*Sr_interp_1D(dip3));
+      res=exp(2*lnx)*K*(alpha_s_pos(dip1)*sr1d(dip1) - alpha_s_pos(x)*sr1d(dip2)*sr1d(dip3));
     }
     else if(rp.alpha_s_running==SMALLEST){
       // take 1
-      res=exp(2*lnx)*K*(alpha_s_pos(dip1)*Sr_interp_1D(dip1) - alpha_s_pos(min(r, min(xi*x, dip3)))*Sr_interp_1D(dip2)*Sr_interp_1D(dip3));
+      res=exp(2*lnx)*K*(alpha_s_pos(dip1)*sr1d(dip1) - alpha_s_pos(min(r, min(xi*x, dip3)))*sr1d(dip2)*sr1d(dip3));
       // take 2
-      //res=exp(2*lnx)*K*alpha_s_pos(min(r, min(xi*x, dip3)))*(Sr_interp_1D(dip1) - Sr_interp_1D(dip2)*Sr_interp_1D(dip3));
+      //res=exp(2*lnx)*K*alpha_s_pos(min(r, min(xi*x, dip3)))*(sr1d(dip1) - sr1d(dip2)*sr1d(dip3));
     }
     else if(rp.alpha_s_running==MIXED){
-      res=exp(2*lnx)*K*alpha_s_pos(min(xi*x,xi*x+r))*(Sr_interp_1D(dip1) - Sr_interp_1D(dip2)*Sr_interp_1D(dip3));
+      res=exp(2*lnx)*K*alpha_s_pos(min(xi*x,xi*x+r))*(sr1d(dip1) - sr1d(dip2)*sr1d(dip3));
     }
     else if(rp.alpha_s_running==MIXEDBD){
-      res=exp(2*lnx)*K*alpha_s_pos(x)*(Sr_interp_1D(dip1) - Sr_interp_1D(dip2)*Sr_interp_1D(dip3));
+      res=exp(2*lnx)*K*alpha_s_pos(x)*(sr1d(dip1) - sr1d(dip2)*sr1d(dip3));
     }
     else{
-      res = exp(2*lnx)*K*(Sr_interp_1D(dip1) - Sr_interp_1D(dip2)*Sr_interp_1D(dip3));
+      res = exp(2*lnx)*K*(sr1d(dip1) - sr1d(dip2)*sr1d(dip3));
     }
 
   }else{
@@ -197,24 +206,24 @@ double integrand_x(double lnx, void *userdata){
       double K=1/x2;
       if(rp.alpha_s_running==PARENT){
         // take 1
-        res=-exp(2*lnx)*K*alpha_s_pos(r)*Sr_interp_1D(dip2)*Sr_interp_1D(dip3);
+        res=-exp(2*lnx)*K*alpha_s_pos(r)*sr1d(dip2)*sr1d(dip3);
         // take 2
-        //res=-exp(2*lnx)*K*alpha_s_pos(r)*Sr_interp_1D(dip2)*Sr_interp_1D(dip3);
+        //res=-exp(2*lnx)*K*alpha_s_pos(r)*sr1d(dip2)*sr1d(dip3);
       }
       else if(rp.alpha_s_running==DAUGHTER){
-        res=-exp(2*lnx)*K*alpha_s_pos(x)*Sr_interp_1D(dip2)*Sr_interp_1D(dip3);
+        res=-exp(2*lnx)*K*alpha_s_pos(x)*sr1d(dip2)*sr1d(dip3);
       }
       else if(rp.alpha_s_running==SMALLEST){
         // take 1
-        res=-exp(2*lnx)*K*alpha_s_pos(min(r, min(xi*x, dip3)))*Sr_interp_1D(dip2)*Sr_interp_1D(dip3);
+        res=-exp(2*lnx)*K*alpha_s_pos(min(r, min(xi*x, dip3)))*sr1d(dip2)*sr1d(dip3);
         // take 2
-        //res=-exp(2*lnx)*K*alpha_s_pos(min(r, min(xi*x, dip3)))*Sr_interp_1D(dip2)*Sr_interp_1D(dip3);
+        //res=-exp(2*lnx)*K*alpha_s_pos(min(r, min(xi*x, dip3)))*sr1d(dip2)*sr1d(dip3);
       }
       else if(rp.alpha_s_running==MIXED){
-        res=-exp(2*lnx)*K*alpha_s_pos(min(xi*x, dip3))*Sr_interp_1D(dip2)*Sr_interp_1D(dip3);
+        res=-exp(2*lnx)*K*alpha_s_pos(min(xi*x, dip3))*sr1d(dip2)*sr1d(dip3);
       }
       else{
-          res=-exp(2*lnx)*K*Sr_interp_1D(dip2)*Sr_interp_1D(dip3);
+          res=-exp(2*lnx)*K*sr1d(dip2)*sr1d(dip3);
       }
 
     }
@@ -229,77 +238,78 @@ double integrand_x(double lnx, void *userdata){
 }
 
 
-double integrand_phi(double phi, void *userdata){
-  using namespace amplitude;
+double NLOCoefficients::integrand_phi(double phi, void *userdata){
   IntegrandContext &ctx = *static_cast<IntegrandContext*>(userdata);
   ctx.phi=phi;
+  NLOCoefficients &self = *ctx.self;
   double result, error;
   gsl_function F;
-  F.function=&integrand_x;
+  F.function=&NLOCoefficients::integrand_x;
   F.params=userdata;
-  gsl_integration_qag(&F,minlnr,maxlnr,epsabs_gsl,epsrel_gsl,gsl_maxpoints,
-                      GSL_INTEG_GAUSS15,func_tmp::w_x,&result,&error);
+  gsl_integration_qag(&F,self.minlnr_,self.maxlnr_,epsabs_gsl,epsrel_gsl,gsl_maxpoints,
+                      GSL_INTEG_GAUSS15,self.w_x_,&result,&error);
   return result;
 }
 
 
-double func(const RunParameters& rp, double r, double xi, double flag){
-  IntegrandContext ctx{&rp, r, xi, 0.0, flag};
+double NLOCoefficients::func(const RunParameters& rp, const DipoleAmplitude1DSlice& sr1d,
+                              double r, double xi, double flag){
+  IntegrandContext ctx{this, &rp, &sr1d, r, xi, 0.0, flag};
   double result, error;
   gsl_function F;
-  F.function=&integrand_phi;
+  F.function=&NLOCoefficients::integrand_phi;
   F.params=&ctx;
   gsl_integration_qag(&F,0,M_PI,epsabs_gsl,epsrel_gsl,gsl_maxpoints,
-                      GSL_INTEG_GAUSS15,func_tmp::w_phi,&result,&error);
+                      GSL_INTEG_GAUSS15,w_phi_,&result,&error);
   return (2*result)/Sq(2*M_PI); // 2: int over pi instead of 2*pi
 }
 
 
-double I2(const RunParameters& rp, double r, double xi){
-  return func(rp,r,xi,2);
+double NLOCoefficients::I2(const RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi){
+  return func(rp,sr1d,r,xi,2);
 }
 
 
-double J(const RunParameters& rp, double r, double xi){
-  return 2*func(rp,r,xi,1);
+double NLOCoefficients::J(const RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi){
+  return 2*func(rp,sr1d,r,xi,1);
 }
 
 
-double J1(const RunParameters& rp, double r, double xi){
-  return func(rp,r,xi,3);
+double NLOCoefficients::J1(const RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi){
+  return func(rp,sr1d,r,xi,3);
 }
 
 
-double H2(const RunParameters& rp, double r, double xi){
-  return func(rp,r,xi,4);
+double NLOCoefficients::H2(const RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi){
+  return func(rp,sr1d,r,xi,4);
 }
 
 
-double H3(const RunParameters& rp, double r, double xi){
-  return func(rp,r,xi,5);
+double NLOCoefficients::H3(const RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi){
+  return func(rp,sr1d,r,xi,5);
 }
 
 
-double H5(const RunParameters& rp, double r, double xi){
-  return func(rp,r,xi,6);
+double NLOCoefficients::H5(const RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi){
+  return func(rp,sr1d,r,xi,6);
 }
 
 
-double K3(const RunParameters& rp, double r, double xi){
-  return func(rp,r,xi,7);
+double NLOCoefficients::K3(const RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi){
+  return func(rp,sr1d,r,xi,7);
 }
 
 
-double Jv(const RunParameters& rp, double r, double xi){
-  return 2*func(rp,r,xi,-1);
+double NLOCoefficients::Jv(const RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi){
+  return 2*func(rp,sr1d,r,xi,-1);
 }
 
 
-double Jv2(const RunParameters& rp, double r, double xi){
-  return 2*func(rp,r,xi,-2);
+double NLOCoefficients::Jv2(const RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r, double xi){
+  return 2*func(rp,sr1d,r,xi,-2);
 }
 
 
-double JJv_xi1(const RunParameters& rp, double r){
-  return func(rp,r,1,0);
+double NLOCoefficients::JJv_xi1(const RunParameters& rp, const DipoleAmplitude1DSlice& sr1d, double r){
+  return func(rp,sr1d,r,1,0);
 }

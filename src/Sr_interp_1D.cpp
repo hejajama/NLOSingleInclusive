@@ -1,46 +1,25 @@
 #include "Sr_interp_1D.hpp"
 
-#include "Sr_interp_2D.hpp"
-#include "bksol_nlodisfit.hpp"
-
 #include <algorithm>
-#include <gsl/gsl_spline.h>
 
 using namespace std;
 
-namespace interp_Sr_1D{
-  gsl_spline *spline;
-  gsl_interp_accel *acc;
-#pragma omp threadprivate(spline,acc)
-}
-
-
-double Sr_interp_1D(double r){
-  using namespace amplitude;
-  using namespace interp_Sr_1D;
-  if(r<minr) return 1;
-  if(r>maxr) return 0;
-  return gsl_spline_eval(spline,r,acc);
-}
-
-
-void init_Sr_interp_1D(double y){
-  using namespace amplitude;
-  using namespace interp_Sr_1D;
-  double *Srvals=new double[rpoints];
+DipoleAmplitude1DSlice::DipoleAmplitude1DSlice(const DipoleAmplitude& dipole, double Y)
+  : minr_(dipole.min_r()), maxr_(dipole.max_r())
+{
+  int rpoints = dipole.r_points();
+  const vector<double>& rvals = dipole.r_values();
+  vector<double> Srvals(rpoints);
   for(int i=0; i<rpoints; i++){
-    double r=rvals[i];
-    Srvals[i]=max(0.,Sr_interp_2D(r,y));
+    double r = rvals[i];
+    Srvals[i] = max(0., dipole.S(r, Y));
   }
-  acc=gsl_interp_accel_alloc();
-  spline=gsl_spline_alloc(gsl_interp_cspline,rpoints);
-  gsl_spline_init(spline,rvals,Srvals,rpoints);
-  delete[] Srvals;
+  spline_.build(rvals.data(), Srvals.data(), rpoints);
 }
 
 
-void clear_Sr_interp_1D(){
-  using namespace interp_Sr_1D;
-  gsl_spline_free(spline);
-  gsl_interp_accel_free(acc);
+double DipoleAmplitude1DSlice::operator()(double r) const{
+  if(r<minr_) return 1;
+  if(r>maxr_) return 0;
+  return spline_.eval(r);
 }

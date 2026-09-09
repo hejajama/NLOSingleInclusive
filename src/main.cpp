@@ -1,7 +1,7 @@
 #include "common.hpp"
-#include "init.hpp"
-#include "init_interp.hpp"
+#include "dipole_amplitude.hpp"
 #include "params.hpp"
+#include "point_tables.hpp"
 #include "sigma_LO.hpp"
 #include "sigma_NLO.hpp"
 #include "utils.hpp"
@@ -10,31 +10,10 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <gsl/gsl_errno.h>
 
 using namespace std;
 using namespace params;
-
-//extern "C"
-//{
-    // ih: input hadron, 1=pion, 2=kaon, 3=proton, 4=charged hadrons
-    // ic: charge, 0=0, 1=+, -1=-
-    // parton:
-        //0    1    2    3    4    5    6    7    8     9    10
-        //g    u   ubar  d   dbar  s   sbar  c   cbar   b   bbar
-    // io: order, 0=LO, 1=NLO
-    // NOTE: cbar and bbar not in DSS, returns c or b instead
-    // result is the fragmentation function (X factor divided out)
-
-    /*void fdss_ (int &ih, int &ic, int &io, double &x, double& q2, double& u,
-        double &ub, double &d, double &db, double &s, double &sb, double &c,
-        double &b, double &g);*/
-/*    void fdss_(int& hadron, int& charge, int& order, double& z,
-              double& scalesqr, int& parton, double& result);
-
-    extern struct{
-        double fini;
-    } fragini_;
-}*/
 
 int main(int argc, char* argv[]){
 
@@ -54,25 +33,20 @@ int main(int argc, char* argv[]){
     const RunParameters rp = make_run_parameters(col, b, p, incoming, outgoing,
                                                   alpha_s_running, mu2);
 
-    init(rp);
+    PdfSet pdf(pdfname);
+    DipoleAmplitude dipole(rp);
+    gsl_set_error_handler(&gsl_error_handler);
 
     double z = zmax;
     double k = p/zmax;
-    //double k = 20.1;
     while(z >= zmin - 0.00001){
-    //while(k <= 50.00001){
-
-      //mu2 = Sq(4*k);
 
       k = p/z;
       double xp=(k/SQRTS)*exp(yh);
       double xg=(k/SQRTS)*exp(-yh);
-      init_interp(rp,xp,xg,k);
-      cout << z << "," << k << "," << sigma_LO_k(rp,k,xp) << "," << sigma_NLO_k(rp,k,xp) << endl;
-      //cout << k << "," << sigma_LO_k(rp,k,xp) << "," << sigma_NLO_k(rp,k,xp) << endl;
-      clear_interp(rp);
+      PointTables tables(rp, pdf, dipole, xp, xg, k);
+      cout << z << "," << k << "," << sigma_LO_k(rp,pdf,tables,k,xp) << "," << sigma_NLO_k(rp,pdf,tables,k,xp) << endl;
       z-=zstep;
-      //k += 0.1;
    }
 
     return 0;
