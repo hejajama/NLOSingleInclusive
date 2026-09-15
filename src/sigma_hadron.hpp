@@ -12,7 +12,7 @@
 // observed hadron's transverse momentum and k is the parton's:
 //
 //   sigma_LO/NLO(p_h) = \int_{zmin}^{1} dz/z^2 * ff.zD(rp,z,rp.mu2_ff)
-//                          * sigma_LO/NLO_k(rp, pdf, tables(z), k=p_h/z, xp(z))
+//                          * sigma_LO/NLO_k(rp, pdf, ..., k=p_h/z, xp(z))
 //
 // xp(z)/xg(z) are recomputed at each z from k=p_h/z the same way main.cpp's
 // parton-level loop computes them from k=p/z (Eqs. 5-6), which is why
@@ -20,11 +20,17 @@
 // arguments here. zmin is the lower cutoff of the (otherwise continuous)
 // z integration -- its upper bound is always 1.
 //
-// LO and NLO are integrated separately, but LO's z-integral never builds a
-// PointTables at all -- it only ever needs DipoleAmplitude::S(r,Y)
-// (sigma_LO.cpp), never PointTables' NLO coefficient/xi-convolution tables
-// (point_tables.cpp's per-r xi-convolution and per-(r,y) NLO-coefficient
-// tables are what make building one expensive). See sigma_hadron.cpp.
+// The z integral itself is a fixed n-point Gauss-Legendre rule (GSL's
+// gsl_integration_glfixed), not an adaptive one: each node costs a full
+// NLO PointTables build (point_tables.cpp's per-r xi-convolution and
+// per-(r,y) NLO-coefficient tables -- the same cost a single parton-level
+// NLO point has), so an adaptive rule's node count -- and hence runtime --
+// isn't something the caller can bound in advance. n directly trades
+// accuracy for a predictable runtime of n times that per-point cost; see
+// cli.hpp's --z-points and the validation note in sigma_hadron.cpp for how
+// its default was chosen. LO is cheap (DipoleAmplitude::S(r,Y) directly,
+// no PointTables) and shares the same n z-nodes as NLO, one PointTables
+// build serving both per node.
 struct HadronSigma{
   double LO;
   double NLO;
@@ -32,4 +38,4 @@ struct HadronSigma{
 
 HadronSigma sigma_hadron_ph(const params::RunParameters& rp, const PdfSet& pdf, const FfSet& ff,
                              const DipoleAmplitude& dipole, double p_h, double zmin,
-                             double sqrts, double y);
+                             double sqrts, double y, int n_zpoints);

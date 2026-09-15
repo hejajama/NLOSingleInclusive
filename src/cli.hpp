@@ -34,6 +34,13 @@
 //      --ff-set <name> (default "NNFF10_PIsum_nlo"): the LHAPDF
 //        fragmentation-function set used when --level hadron; ignored
 //        for --level parton.
+//      --z-points <n> (default 16, ignored for --level parton): number of
+//        nodes in the fixed-order Gauss-Legendre rule used for --level
+//        hadron's z integral (sigma_hadron.hpp) -- deterministic and
+//        exactly n NLO-cost evaluations, unlike an adaptive quadrature, so
+//        this directly controls that mode's runtime (roughly n times the
+//        cost of one parton-level NLO point). 16 was picked as a ~1%-or-
+//        better default; see the validation note in sigma_hadron.cpp.
 //
 //  - Legacy positional form, kept for backward compatibility with existing
 //    scripts (Script.sh, Script_oberon.sh, tests/regression/cases/*/args):
@@ -61,6 +68,7 @@ struct Args{
   double sigma0;  // params::sigma0 unless overridden by --sigma02 (already doubled from that flag's sigma0/2 input)
   std::string level;   // "parton" (default) or "hadron"
   std::string ff_set;  // fragmentation-function set name, used only for level=="hadron"
+  int z_points;        // Gauss-Legendre node count for level=="hadron"'s z integral (default 16)
 };
 
 // Parses argc/argv as passed to main() (argv[0] is the program name).

@@ -23,7 +23,7 @@ namespace{
        << "      --p <d> --muratio <d> [--sqrts <d>] [--y <d>]\n"
        << "      [--bk-proton <file>] [--bk-nucleus <prefix>]\n"
        << "      [--sigma02 <d> [mb]]\n"
-       << "      [--level <parton|hadron>] [--ff-set <name>]\n\n"
+       << "      [--level <parton|hadron>] [--ff-set <name>] [--z-points <n>]\n\n"
        << "Usage (legacy positional, kept for backward compatibility):\n"
        << "  " << prog << " zmin zmax zstep col b incoming outgoing rc p muratio\n";
   exit(1);
@@ -35,6 +35,15 @@ double parse_double(const string& prog, const string& name, const string& value)
   }
   catch(...){
     usage_error(prog, "invalid numeric value for " + name + ": '" + value + "'");
+  }
+}
+
+int parse_int(const string& prog, const string& name, const string& value){
+  try{
+    return stoi(value);
+  }
+  catch(...){
+    usage_error(prog, "invalid integer value for " + name + ": '" + value + "'");
   }
 }
 
@@ -52,6 +61,7 @@ Args parse(int argc, char* argv[]){
   args.sigma0 = params::sigma0;
   args.level = "parton";
   args.ff_set = "NNFF10_PIsum_nlo";
+  args.z_points = 16;
 
   const bool named = !tokens.empty() && tokens[0].rfind("--", 0) == 0;
 
@@ -137,11 +147,17 @@ Args parse(int argc, char* argv[]){
     }
   }
   if(flags.count("ff-set")) args.ff_set = flags.at("ff-set");
+  if(flags.count("z-points")){
+    args.z_points = parse_int(prog, "z-points", flags.at("z-points"));
+    if(args.z_points < 1){
+      usage_error(prog, "--z-points must be at least 1, got " + to_string(args.z_points));
+    }
+  }
 
   // Reject unknown flags (typos) rather than silently ignoring them.
   static const vector<string> known = {"zmin", "zmax", "zstep", "col", "b",
     "incoming", "outgoing", "rc", "p", "muratio", "sqrts", "y",
-    "bk-proton", "bk-nucleus", "sigma02", "level", "ff-set"};
+    "bk-proton", "bk-nucleus", "sigma02", "level", "ff-set", "z-points"};
   for(const auto& [name, value] : flags){
     (void)value;
     if(find(known.begin(), known.end(), name) == known.end()){

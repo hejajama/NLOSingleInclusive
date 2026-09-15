@@ -67,7 +67,7 @@ int main(int argc, char* argv[]){
     else{  // "hadron"
       FfSet ff(args.ff_set);
       double p_h = args.p;
-      HadronSigma sigma = sigma_hadron_ph(rp, pdf, ff, dipole, p_h, args.zmin, args.sqrts, args.y);
+      HadronSigma sigma = sigma_hadron_ph(rp, pdf, ff, dipole, p_h, args.zmin, args.sqrts, args.y, args.z_points);
       cout << p_h << "," << sigma.LO << "," << sigma.NLO << endl;
     }
 
