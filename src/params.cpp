@@ -89,6 +89,7 @@ RunParameters make_run_parameters(string col, double b, double p,
   rp.outgoing = outgoing;
   rp.alpha_s_running = alpha_s_running;
   rp.mu2 = mu2;
+  rp.mu2_ff = mu2;   // see RunParameters::mu2_ff in params.hpp
   rp.TA = lookup_TA(b);
   rp.bk_proton_file = bk_proton.empty() ? bksolpp : bk_proton;
   rp.bk_nucleus_prefix = bk_nucleus.empty() ? bksolpA : bk_nucleus;

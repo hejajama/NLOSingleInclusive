@@ -53,8 +53,7 @@ namespace {
 PointTables::PointTables(const RunParameters& rp, const PdfSet& pdf,
                           const DipoleAmplitude& dipole, double xp, double xg, double k)
   : minr_(dipole.min_r()), maxr_(dipole.max_r()),
-    y_floor_(std::log(1/dipole.x0())),
-    outer_slice_(dipole, std::log(1/xg))
+    y_floor_(std::log(1/dipole.x0()))
 {
   build_coefficient_tables(rp, dipole, xg);
   build_xi_convolution(rp, pdf, dipole, xp, xg, k);
@@ -77,11 +76,6 @@ double PointTables::xi_convolution(double r) const{
   if(r<minr_) r=minr_;
   if(r>maxr_) return 0;
   return xi_conv_spline_.eval(r);
-}
-
-
-double PointTables::dipole_slice(double r) const{
-  return outer_slice_(r);
 }
 
 

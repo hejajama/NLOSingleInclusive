@@ -149,6 +149,12 @@ namespace params{
     std::string outgoing;
     running_types alpha_s_running;
     double mu2;
+    // Fragmentation-function scale (sec. V hadron-level convolution,
+    // ff_set.hpp/sigma_hadron.hpp). Set equal to mu2 by make_run_parameters()
+    // (both derive from --p/--muratio) but kept as its own field so the FF
+    // convolution isn't silently coupled to the PDF scale if the two are
+    // ever decoupled (e.g. a separate --muratio-ff) later.
+    double mu2_ff;
     double TA;              // params::TAfile row matching b
     Channel channel;
     std::string bk_proton_file;    // BK solution file for col=="pp" (params::bksolpp unless overridden on the CLI)

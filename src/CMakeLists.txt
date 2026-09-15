@@ -6,6 +6,7 @@ set(NLOSINGLEINCLUSIVE_SOURCES
     params.cpp
     utils.cpp
     pdf_set.cpp
+    ff_set.cpp
     running_coupling.cpp
     spline_wrappers.cpp
     dipole_amplitude.cpp
@@ -15,6 +16,7 @@ set(NLOSINGLEINCLUSIVE_SOURCES
     intde1.cpp
     sigma_NLO.cpp
     sigma_LO.cpp
+    sigma_hadron.cpp
 )
 set(NLOSINGLEINCLUSIVE_HEADERS
     common.hpp
@@ -22,6 +24,7 @@ set(NLOSINGLEINCLUSIVE_HEADERS
     params.hpp
     utils.hpp
     pdf_set.hpp
+    ff_set.hpp
     running_coupling.hpp
     spline_wrappers.hpp
     dipole_amplitude.hpp
@@ -31,6 +34,7 @@ set(NLOSINGLEINCLUSIVE_HEADERS
     intde1.hpp
     sigma_NLO.hpp
     sigma_LO.hpp
+    sigma_hadron.hpp
 )
 
 add_executable(nlosingleinclusive

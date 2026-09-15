@@ -12,9 +12,9 @@ class PdfSet;   // pdf_set.hpp -- only used by reference here
 // Everything that depends on a single kinematic point (xp, xg, k): bicubic
 // (r,Y) interpolations of the ten NLO coefficient functions
 // (nlo_coefficients.hpp -- see that header for the paper-symbol mapping,
-// which is not 1:1), their xi-convolution with the PDF at this point, and
-// the fixed-Y dipole-amplitude slice used by the LO cross section
-// (sigma_LO.cpp).
+// which is not 1:1), and their xi-convolution with the PDF at this point.
+// (The LO cross section, sigma_LO.cpp, doesn't need any of this -- it
+// calls DipoleAmplitude::S(r,Y) directly.)
 //
 // xi_convolution(r) is the parton-level NLO correction to the cross
 // section at fixed r: the dxi integral in arXiv:2310.06640 Eqs. (9)
@@ -49,9 +49,6 @@ public:
   // point's (xp, xg, k).
   double xi_convolution(double r) const;
 
-  // S(r, Y) at this point's fixed rapidity Y = log(1/xg).
-  double dipole_slice(double r) const;
-
 private:
   enum Coeff{ kI2, kJ, kK1, kH2, kH3, kH4, kK2, kJv, kJv2, kJJv_xi1, kNumCoeffs };
 
@@ -60,7 +57,6 @@ private:
                          // evaluating any coefficient-function spline
   std::array<Spline2D, kNumCoeffs> coeff_splines_;
   Spline1D xi_conv_spline_;
-  DipoleAmplitude1DSlice outer_slice_;
 
   void build_coefficient_tables(const params::RunParameters& rp,
                                  const DipoleAmplitude& dipole, double xg);

@@ -22,7 +22,8 @@ namespace{
        << "      --rc <fixed|mom|parent|daughter|smallest|mixed|mixedbd>\n"
        << "      --p <d> --muratio <d> [--sqrts <d>] [--y <d>]\n"
        << "      [--bk-proton <file>] [--bk-nucleus <prefix>]\n"
-       << "      [--sigma02 <d> [mb]]\n\n"
+       << "      [--sigma02 <d> [mb]]\n"
+       << "      [--level <parton|hadron>] [--ff-set <name>]\n\n"
        << "Usage (legacy positional, kept for backward compatibility):\n"
        << "  " << prog << " zmin zmax zstep col b incoming outgoing rc p muratio\n";
   exit(1);
@@ -49,6 +50,8 @@ Args parse(int argc, char* argv[]){
   args.bk_proton = "";
   args.bk_nucleus = "";
   args.sigma0 = params::sigma0;
+  args.level = "parton";
+  args.ff_set = "NNFF10_PIsum_nlo";
 
   const bool named = !tokens.empty() && tokens[0].rfind("--", 0) == 0;
 
@@ -127,11 +130,18 @@ Args parse(int argc, char* argv[]){
     if(sigma02_is_mb) sigma02 /= params::GeV2_to_mb;  // mb -> GeV^-2
     args.sigma0 = 2.0*sigma02;
   }
+  if(flags.count("level")){
+    args.level = flags.at("level");
+    if(args.level != "parton" && args.level != "hadron"){
+      usage_error(prog, "--level must be 'parton' or 'hadron', got '" + args.level + "'");
+    }
+  }
+  if(flags.count("ff-set")) args.ff_set = flags.at("ff-set");
 
   // Reject unknown flags (typos) rather than silently ignoring them.
   static const vector<string> known = {"zmin", "zmax", "zstep", "col", "b",
     "incoming", "outgoing", "rc", "p", "muratio", "sqrts", "y",
-    "bk-proton", "bk-nucleus", "sigma02"};
+    "bk-proton", "bk-nucleus", "sigma02", "level", "ff-set"};
   for(const auto& [name, value] : flags){
     (void)value;
     if(find(known.begin(), known.end(), name) == known.end()){

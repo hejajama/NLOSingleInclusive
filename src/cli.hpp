@@ -23,6 +23,17 @@
 //        is taken to already be in GeV^-2 unless a literal trailing "mb"
 //        token follows it, in which case it's first converted from
 //        millibarns (e.g. --sigma02 47.2 mb).
+//      --level <parton|hadron> (default "parton"): parton keeps the
+//        existing behavior (main.cpp's z-scan of the bare parton-level
+//        cross section, sec. IV). hadron instead convolves that
+//        parton-level result with a fragmentation function (sec. V) --
+//        --p is then the *hadron's* transverse momentum p_h, --zmin is the
+//        lower bound of the (internal, continuous) z=p_h/k integration
+//        (its upper bound is always 1), and --zmax/--zstep are accepted
+//        but unused. See ff_set.hpp/sigma_hadron.hpp.
+//      --ff-set <name> (default "NNFF10_PIsum_nlo"): the LHAPDF
+//        fragmentation-function set used when --level hadron; ignored
+//        for --level parton.
 //
 //  - Legacy positional form, kept for backward compatibility with existing
 //    scripts (Script.sh, Script_oberon.sh, tests/regression/cases/*/args):
@@ -48,6 +59,8 @@ struct Args{
   std::string bk_proton;   // empty unless --bk-proton given (params::make_run_parameters then keeps params::bksolpp)
   std::string bk_nucleus;  // empty unless --bk-nucleus given (params::make_run_parameters then keeps params::bksolpA)
   double sigma0;  // params::sigma0 unless overridden by --sigma02 (already doubled from that flag's sigma0/2 input)
+  std::string level;   // "parton" (default) or "hadron"
+  std::string ff_set;  // fragmentation-function set name, used only for level=="hadron"
 };
 
 // Parses argc/argv as passed to main() (argv[0] is the program name).

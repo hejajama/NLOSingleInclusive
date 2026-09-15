@@ -129,7 +129,13 @@ DipoleAmplitude::DipoleAmplitude(const RunParameters& rp){
 double DipoleAmplitude::S(double r, double Y) const{
   if(r<minr_) return 1;
   if(r>maxr_) return 0;
-  return spline_.eval(r, max(0.0, Y-std::log(1/x0_)));
+  // The bicubic spline can overshoot slightly (interpolation ripple) even
+  // though S itself is a probability and must stay in [0,1] -- clamp rather
+  // than let that leak into callers (e.g. sigma_LO.cpp squares this for the
+  // gluon channel, where a tiny negative value is otherwise harmless but a
+  // tiny >1 value is not).
+  double s = spline_.eval(r, max(0.0, Y-std::log(1/x0_)));
+  return clamp(s, 0.0, 1.0);
 }
 
 
