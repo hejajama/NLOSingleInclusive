@@ -8,6 +8,12 @@
 // dipole-amplitude and NLO-coefficient interpolation code instead of
 // hand-paired alloc/free calls. Generic numerics helpers, not tied to any
 // particular physics quantity.
+//
+// eval() is safe to call concurrently on the same instance from multiple
+// threads: the underlying gsl_spline/gsl_spline2d data is immutable once
+// build()/init()+build() have run, and eval() itself uses a thread_local
+// gsl_interp_accel (spline_wrappers.cpp) rather than a per-instance one, so
+// no accelerator is ever mutated by more than one thread.
 
 // A 1D cubic spline built from a full (x,y) array in one shot.
 class Spline1D{
@@ -24,7 +30,6 @@ public:
 
 private:
   gsl_spline *spline_ = nullptr;
-  gsl_interp_accel *acc_ = nullptr;
 };
 
 // A bicubic 2D spline, filled in one value at a time (set()) and then
@@ -46,7 +51,6 @@ public:
 
 private:
   gsl_spline2d *spline_ = nullptr;
-  gsl_interp_accel *xacc_ = nullptr, *yacc_ = nullptr;
   std::vector<double> backing_;
   int rpoints_ = 0, ypoints_ = 0;
 };

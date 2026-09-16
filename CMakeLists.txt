@@ -38,8 +38,29 @@ endif()
 message(STATUS "Found LHAPDF include: ${LHAPDF_INCLUDE_DIR}")
 message(STATUS "Found LHAPDF library: ${LHAPDF_LIBRARY}")
 
+# --- OpenMP --------------------------------------------------------------
+# AppleClang doesn't ship OpenMP support itself; on macOS, point CMake at
+# Homebrew's libomp (same manual-find pattern as LHAPDF above) before
+# find_package(OpenMP) so it can locate it.
+if(APPLE AND NOT DEFINED OpenMP_CXX_FLAGS)
+    find_path(LIBOMP_INCLUDE_DIR omp.h
+        PATHS /opt/homebrew/opt/libomp /usr/local/opt/libomp
+        PATH_SUFFIXES include
+    )
+    find_library(LIBOMP_LIBRARY NAMES omp
+        PATHS /opt/homebrew/opt/libomp /usr/local/opt/libomp
+        PATH_SUFFIXES lib
+    )
+    if(LIBOMP_INCLUDE_DIR AND LIBOMP_LIBRARY)
+        set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp -I${LIBOMP_INCLUDE_DIR}")
+        set(OpenMP_CXX_LIB_NAMES "omp")
+        set(OpenMP_omp_LIBRARY ${LIBOMP_LIBRARY})
+    endif()
+endif()
+find_package(OpenMP REQUIRED)
+
 # The actual source list and target live in src/.
 add_subdirectory(src)
 
 target_include_directories(nlosingleinclusive PRIVATE ${LHAPDF_INCLUDE_DIR})
-target_link_libraries(nlosingleinclusive PRIVATE GSL::gsl GSL::gslcblas ${LHAPDF_LIBRARY})
+target_link_libraries(nlosingleinclusive PRIVATE GSL::gsl GSL::gslcblas ${LHAPDF_LIBRARY} OpenMP::OpenMP_CXX)

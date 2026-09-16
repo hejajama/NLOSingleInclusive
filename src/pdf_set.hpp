@@ -17,6 +17,12 @@ public:
   // x*f(x,Q^2) for rp.incoming.
   double xf(const params::RunParameters& rp, double x, double Q2) const;
 
+  // The LHAPDF set name this instance was built from -- lets a caller build
+  // an independent PdfSet wrapping the same set (e.g. one per thread, since
+  // LHAPDF::PDF is not safe to share across threads: see sigma_hadron.cpp).
+  const std::string& name() const { return name_; }
+
 private:
+  std::string name_;
   std::unique_ptr<LHAPDF::PDF> pdf_;
 };

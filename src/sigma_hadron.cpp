@@ -18,7 +18,10 @@
 #include "sigma_NLO.hpp"
 
 #include <cmath>
+#include <memory>
+#include <vector>
 #include <gsl/gsl_integration.h>
+#include <omp.h>
 
 using namespace params;
 
@@ -27,26 +30,55 @@ HadronSigma sigma_hadron_ph(const RunParameters& rp, const PdfSet& pdf, const Ff
                              double sqrts, double y, int n_zpoints){
   gsl_integration_glfixed_table *table = gsl_integration_glfixed_table_alloc(n_zpoints);
 
-  HadronSigma result{0, 0};
+  // Each Gauss-Legendre node below is independent by construction, so the
+  // loop is parallelized over i. LHAPDF::PDF (wrapped by PdfSet/FfSet) is
+  // not safe to share across threads -- it lazily builds mutable
+  // interpolator/extrapolator caches on first evaluation -- so each thread
+  // gets its own PdfSet/FfSet, built serially here from the same
+  // underlying set. dipole is safe to share (Spline2D::eval uses a
+  // thread_local accelerator, see spline_wrappers.cpp).
+  const int nthreads = omp_get_max_threads();
+  std::vector<std::unique_ptr<PdfSet>> pdf_tls(nthreads);
+  std::vector<std::unique_ptr<FfSet>> ff_tls(nthreads);
+  for(int t=0; t<nthreads; t++){
+    pdf_tls[t] = std::make_unique<PdfSet>(pdf.name());
+    ff_tls[t] = std::make_unique<FfSet>(ff.name());
+  }
+
+  // Written one slot per i, then summed serially below in index order --
+  // avoids both a shared accumulator and any parallel-reduction reordering,
+  // so the result matches the original serial summation exactly.
+  std::vector<double> LO_i(n_zpoints, 0.0), NLO_i(n_zpoints, 0.0);
+
+  #pragma omp parallel for schedule(dynamic)
   for(int i=0; i<n_zpoints; i++){
+    const PdfSet& tpdf = *pdf_tls[omp_get_thread_num()];
+    const FfSet& tff = *ff_tls[omp_get_thread_num()];
+
     double z, w;
     gsl_integration_glfixed_point(zmin, 1, i, &z, &w, table);
 
     double k = p_h/z;
     double xp = (k/sqrts)*exp(y);    // Eq. 6, at this z's k
     double xg = (k/sqrts)*exp(-y);   // Eq. 5, at this z's k
-    double D = ff.zD(rp, z, rp.mu2_ff);
+    double D = tff.zD(rp, z, rp.mu2_ff);
     double jacobian = w/Sq(z);
 
     // LO only ever needs S(r,Y) (sigma_LO.cpp), never PointTables' NLO
     // coefficient/xi-convolution tables, so it skips PointTables entirely.
-    result.LO += jacobian*D*sigma_LO_k(rp, pdf, dipole, xg, k, xp);
+    LO_i[i] = jacobian*D*sigma_LO_k(rp, tpdf, dipole, xg, k, xp);
 
     // NLO does need the full PointTables, built once here and reused for
     // nothing else -- each Gauss-Legendre node is independent by
     // construction, so there's nothing to cache across them.
-    PointTables tables(rp, pdf, dipole, xp, xg, k);
-    result.NLO += jacobian*D*sigma_NLO_k(rp, pdf, tables, k, xp);
+    PointTables tables(rp, tpdf, dipole, xp, xg, k);
+    NLO_i[i] = jacobian*D*sigma_NLO_k(rp, tpdf, tables, k, xp);
+  }
+
+  HadronSigma result{0, 0};
+  for(int i=0; i<n_zpoints; i++){
+    result.LO += LO_i[i];
+    result.NLO += NLO_i[i];
   }
 
   gsl_integration_glfixed_table_free(table);

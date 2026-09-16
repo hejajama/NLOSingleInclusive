@@ -25,6 +25,12 @@ public:
   // cli.hpp/params.cpp: outgoing is just "g" or "q").
   double zD(const params::RunParameters& rp, double z, double Q2) const;
 
+  // The LHAPDF set name this instance was built from -- lets a caller build
+  // an independent FfSet wrapping the same set (e.g. one per thread, since
+  // LHAPDF::PDF is not safe to share across threads: see sigma_hadron.cpp).
+  const std::string& name() const { return name_; }
+
 private:
+  std::string name_;
   std::unique_ptr<LHAPDF::PDF> ff_;
 };

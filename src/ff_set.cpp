@@ -6,7 +6,7 @@
 using namespace std;
 using namespace params;
 
-FfSet::FfSet(const string& name){
+FfSet::FfSet(const string& name): name_(name){
   LHAPDF::setVerbosity(0);
   ff_.reset(LHAPDF::mkPDF(name, 0));
 }
