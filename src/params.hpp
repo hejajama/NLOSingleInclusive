@@ -94,8 +94,9 @@ namespace params{
   //inline constexpr double SQRTS = 5000;     // LHCb pp (GeV)
   inline constexpr double SQRTS = 8160;     // New LHCb (GeV)
   inline constexpr double yh = 3;
-  // PDFs
+  // PDFs (default values)
   inline const std::string pdfname = "MSTW2008nlo90cl";
+  const std::string default_ffname = "NNFF10_PIp_nlo,NNFF10_PIm_nlo";
   // constants
   inline constexpr int Nc = 3, Nf = 3;
 

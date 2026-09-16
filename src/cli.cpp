@@ -18,7 +18,7 @@ namespace{
   cerr << "Error: " << message << "\n\n"
        << "Usage (named flags):\n"
        << "  " << prog << " --zmin <d> --col <pp|pA>\n"
-       << "      --incoming <g|q|u|d|s|ubar|dbar|sbar> --outgoing <g|q>\n"
+       << "      --incoming <g|q|u|d|s|ubar|dbar|sbar> --outgoing <g|q|u|d|s|ubar|dbar|sbar>\n"
        << "      --rc <fixed|mom|parent|daughter|smallest|mixed|mixedbd>\n"
        << "      --pt <d> --muratio <d> [--sqrts <d>] [--y <d>]\n"
        << "      [--bk-proton <file>] [--bk-nucleus <prefix>]\n"
@@ -63,7 +63,7 @@ Args parse(int argc, char* argv[]){
   args.bk_nucleus = "";
   args.sigma0 = params::sigma0;
   args.level = "parton";
-  args.ff_set = "NNFF10_PIsum_nlo";
+  args.ff_set = params::default_ffname;
   args.z_points = 16;
   args.pdf_set = params::pdfname;
 

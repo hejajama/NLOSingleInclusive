@@ -38,6 +38,12 @@ struct HadronSigma{
 
 // Returns dN / d^2 p_h dy. To get the cross section, in pp collisions  this should be multiplied by params::sigma0/2
 // in pA, one should instead perform the d^2b integral (which in pp case is replaced by \int d^2b -> simga_0/2)
+//
+// Exits with an error for a multi-flavor rp.incoming (rp.incoming=="q", or
+// a '+'-joined token like "u+ubar" -- see PdfSet::xf) combined with
+// rp.outgoing=="q" -- see the check at the top of sigma_hadron.cpp for why,
+// and README.md's "Hadron-level flavor sums" for the correct way to get
+// that result.
 HadronSigma sigma_hadron_ph(const params::RunParameters& rp, const PdfSet& pdf, const FfSet& ff,
                              const DipoleAmplitude& dipole, double p_h, double zmin,
                              double sqrts, double y, int n_zpoints);

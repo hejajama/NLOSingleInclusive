@@ -17,7 +17,11 @@ public:
 
   // x*f(x,Q^2) for rp.incoming. rp.incoming=="q" sums the PDFs of all Nf
   // light quark AND antiquark flavors (params::Nf) -- see
-  // docs/pdf_evaluation_bug.md for the history of this branch.
+  // docs/pdf_evaluation_bug.md for the history of this branch. Otherwise
+  // rp.incoming is one flavor token ("g"/"u"/"d"/"s"/"ubar"/"dbar"/"sbar"),
+  // or several joined by '+' (e.g. "u+ubar") to sum just those -- see
+  // README.md, "pi0 fragmentation functions", for why that's useful (and
+  // when it's actually correct to use).
   double xf(const params::RunParameters& rp, double x, double Q2) const;
 
   // The LHAPDF set name this instance was built from -- lets a caller build

@@ -48,9 +48,14 @@ int main(int argc, char* argv[]){
                                                   alpha_s_running, mu2,
                                                   args.bk_proton, args.bk_nucleus, args.sigma0);
 
+    if (params::with_xi1) {
+        std::cerr << "Warning: params::with_xi1 is true, which refers to unsupported subtracted-scheme NLO. The results may not be correct." << std::endl;
+    }
+
     PdfSet pdf(args.pdf_set);
     DipoleAmplitude dipole(rp);
     gsl_set_error_handler(&gsl_error_handler);
+
 
     if(args.level == "parton"){
       double z = args.zmax;

@@ -38,9 +38,15 @@
 //        (its upper bound is always 1), and --zmax/--zstep are not needed
 //        (parton-mode-only, see ff_set.hpp/sigma_hadron.hpp) -- omit them,
 //        or pass them anyway and they're accepted but ignored.
-//      --ff-set <name> (default "NNFF10_PIsum_nlo"): the LHAPDF
+//      --ff-set <name> (default params::default_ffname): the LHAPDF
 //        fragmentation-function set used when --level hadron; ignored
-//        for --level parton.
+//        for --level parton. name can also be two LHAPDF set names
+//        separated by a comma (no spaces), e.g.
+//        "NNFF10_PIp_nlo,NNFF10_PIm_nlo", in which case the reported FF is
+//        the average of the two sets -- see ff_set.hpp and README.md,
+//        "pi0 fragmentation functions" (LHAPDF has no charge-neutral pion
+//        FF set, so pi0's is approximated via isospin symmetry as
+//        (D_pi+ + D_pi-)/2).
 //      --pdf-set <name> (default params::pdfname): the LHAPDF PDF set used
 //        for the incoming parton (rp.incoming), both --level parton and
 //        --level hadron.
