@@ -40,13 +40,6 @@ def log(message):
     with _print_lock:
         print(message, file=sys.stderr)
 
-# Required by the CLI parser even in --level hadron, where they're unused
-# (see cli.hpp): zmin is hadron mode's actual z-integral lower bound
-# (exposed below as --zmin), zmax/zstep are parton-mode leftovers with no
-# effect on hadron-level output.
-UNUSED_ZMAX = "0.95"
-UNUSED_ZSTEP = "0.5"
-
 
 def channel_label(incoming, outgoing):
     return f"{incoming}{outgoing}"
@@ -57,17 +50,16 @@ def build_command(binary, args, incoming, outgoing, p):
         binary,
         "--level", "hadron",
         "--col", args.col,
-        "--b", str(args.b),
         "--incoming", incoming,
         "--outgoing", outgoing,
         "--rc", args.rc,
-        "--p", str(p),
+        "--pt", str(p),
         "--muratio", str(args.muratio),
         "--zmin", str(args.zmin),
-        "--zmax", UNUSED_ZMAX,
-        "--zstep", UNUSED_ZSTEP,
         "--z-points", str(args.z_points),
     ]
+    if args.b is not None:
+        cmd += ["--b", str(args.b)]
     if args.ff_set is not None:
         cmd += ["--ff-set", args.ff_set]
     if args.pdf_set is not None:
@@ -254,7 +246,10 @@ def parse_args():
     ap.add_argument("--pt-step", type=float, default=1.0, help="p_T step (GeV)")
 
     ap.add_argument("--col", default="pp", help="--col forwarded to nlosingleinclusive")
-    ap.add_argument("--b", type=float, default=0.0, help="--b forwarded to nlosingleinclusive")
+    ap.add_argument("--b", type=float, default=None,
+                     help="--b forwarded to nlosingleinclusive (impact parameter; only "
+                          "meaningful, and required by the binary, for --col pA -- omit "
+                          "it for the default --col pp)")
     ap.add_argument("--rc", default="mom", help="--rc forwarded to nlosingleinclusive")
     ap.add_argument("--muratio", type=float, default=1.0,
                      help="--muratio forwarded to nlosingleinclusive")

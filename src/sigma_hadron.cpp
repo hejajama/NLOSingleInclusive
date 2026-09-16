@@ -1,6 +1,6 @@
 // Choice of n_zpoints's default (16, cli.hpp's --z-points): checked
 // against pp, incoming=q, outgoing=q, rc=mom, p_h=2, zmin=0.4 (--col pp
-// --b 0 --incoming q --outgoing q --rc mom --p 2 --muratio 1 --level
+// --b 0 --incoming q --outgoing q --rc mom --pt 2 --muratio 1 --level
 // hadron --zmin 0.4). LO (cheap, no PointTables) converges essentially
 // immediately: n=2 is within 0.05% of an n=128 reference. NLO is pricier
 // to check (each point costs a full PointTables build) but doubling
@@ -61,7 +61,8 @@ HadronSigma sigma_hadron_ph(const RunParameters& rp, const PdfSet& pdf, const Ff
     double k = p_h/z;
     double xp = (k/sqrts)*exp(y);    // Eq. 6, at this z's k
     double xg = (k/sqrts)*exp(-y);   // Eq. 5, at this z's k
-    double D = tff.zD(rp, z, rp.mu2_ff);
+    double zD = tff.zD(rp, z, rp.mu2_ff); // Note that LHAPDF returns z*D(z,mu^2)
+    double D = zD/z; // below we have explicitly 1/z^2
     double jacobian = w/Sq(z);
 
     // LO only ever needs S(r,Y) (sigma_LO.cpp), never PointTables' NLO

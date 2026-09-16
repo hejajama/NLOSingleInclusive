@@ -6,10 +6,16 @@
 // accepted:
 //
 //  - Named-flag form (preferred): every parameter is given as --name value,
-//    e.g. `--incoming q --outgoing g`, in any order:
-//      --zmin --zmax --zstep --col --b --incoming --outgoing --rc --p --muratio
+//    in any order:
+//      --zmin --col --incoming --outgoing --rc --pt --muratio
+//      --zmax --zstep (also required, unless --level hadron -- see below)
+//      --b (also required, but only for --col pA -- see below)
 //    plus optional flags that override params.hpp compile-time constants
 //    for this run only:
+//      --b <d> (default 0, ignored): the impact parameter, only used for
+//        --col pA (Sr_0's nucleus branch and the BK-nucleus grid file
+//        lookup are both gated on rp.col=="pA" -- see
+//        dipole_amplitude.cpp); required for --col pA, optional otherwise.
 //      --sqrts (default params::SQRTS), --y (default params::yh)
 //      --bk-proton (default params::bksolpp): BK solution file used for
 //        --col pp
@@ -27,10 +33,11 @@
 //        existing behavior (main.cpp's z-scan of the bare parton-level
 //        cross section, sec. IV). hadron instead convolves that
 //        parton-level result with a fragmentation function (sec. V) --
-//        --p is then the *hadron's* transverse momentum p_h, --zmin is the
-//        lower bound of the (internal, continuous) z=p_h/k integration
-//        (its upper bound is always 1), and --zmax/--zstep are accepted
-//        but unused. See ff_set.hpp/sigma_hadron.hpp.
+//        --pt is then the *hadron's* transverse momentum p_h, --zmin is
+//        the lower bound of the (internal, continuous) z=p_h/k integration
+//        (its upper bound is always 1), and --zmax/--zstep are not needed
+//        (parton-mode-only, see ff_set.hpp/sigma_hadron.hpp) -- omit them,
+//        or pass them anyway and they're accepted but ignored.
 //      --ff-set <name> (default "NNFF10_PIsum_nlo"): the LHAPDF
 //        fragmentation-function set used when --level hadron; ignored
 //        for --level parton.
@@ -57,12 +64,13 @@
 namespace cli{
 
 struct Args{
-  double zmin, zmax, zstep;
+  double zmin;
+  double zmax, zstep;  // required unless level=="hadron" (0 otherwise if not given)
   std::string col;
-  double b;
+  double b;  // required for col=="pA" (0 otherwise if not given; unused for col!="pA")
   std::string incoming, outgoing;
   std::string rc;
-  double p;
+  double pt;  // parton p (level=="parton") or hadron p_h (level=="hadron")
   double muratio;
   double sqrts;   // params::SQRTS unless overridden by --sqrts
   double y;       // params::yh unless overridden by --y

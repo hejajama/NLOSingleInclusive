@@ -17,14 +17,16 @@ namespace{
 [[noreturn]] void usage_error(const string& prog, const string& message){
   cerr << "Error: " << message << "\n\n"
        << "Usage (named flags):\n"
-       << "  " << prog << " --zmin <d> --zmax <d> --zstep <d> --col <pp|pA> --b <d>\n"
+       << "  " << prog << " --zmin <d> --col <pp|pA>\n"
        << "      --incoming <g|q|u|d|s|ubar|dbar|sbar> --outgoing <g|q>\n"
        << "      --rc <fixed|mom|parent|daughter|smallest|mixed|mixedbd>\n"
-       << "      --p <d> --muratio <d> [--sqrts <d>] [--y <d>]\n"
+       << "      --pt <d> --muratio <d> [--sqrts <d>] [--y <d>]\n"
        << "      [--bk-proton <file>] [--bk-nucleus <prefix>]\n"
        << "      [--sigma02 <d> [mb]]\n"
        << "      [--level <parton|hadron>] [--ff-set <name>] [--z-points <n>]\n"
-       << "      [--pdf-set <name>]\n\n"
+       << "      [--pdf-set <name>]\n"
+       << "      --zmax <d> --zstep <d> (both required unless --level hadron)\n"
+       << "      --b <d> (required for --col pA; ignored/optional otherwise)\n\n"
        << "Usage (legacy positional, kept for backward compatibility):\n"
        << "  " << prog << " zmin zmax zstep col b incoming outgoing rc p muratio\n";
   exit(1);
@@ -82,7 +84,7 @@ Args parse(int argc, char* argv[]){
     args.incoming = tokens[5];
     args.outgoing = tokens[6];
     args.rc = tokens[7];
-    args.p = parse_double(prog, "p", tokens[8]);
+    args.pt = parse_double(prog, "p", tokens[8]);
     args.muratio = parse_double(prog, "muratio", tokens[9]);
     return args;
   }
@@ -123,15 +125,40 @@ Args parse(int argc, char* argv[]){
     return it->second;
   };
 
+  // Parsed first: --zmax/--zstep's requiredness below depends on it.
+  if(flags.count("level")){
+    args.level = flags.at("level");
+    if(args.level != "parton" && args.level != "hadron"){
+      usage_error(prog, "--level must be 'parton' or 'hadron', got '" + args.level + "'");
+    }
+  }
+
   args.zmin = parse_double(prog, "zmin", require("zmin"));
-  args.zmax = parse_double(prog, "zmax", require("zmax"));
-  args.zstep = parse_double(prog, "zstep", require("zstep"));
+  if(args.level == "hadron"){
+    // Unused by --level hadron (its z integral only uses --zmin; see
+    // sigma_hadron.hpp) -- optional there, unlike --level parton where
+    // they drive the z sweep in main.cpp.
+    args.zmax = flags.count("zmax") ? parse_double(prog, "zmax", flags.at("zmax")) : 0.0;
+    args.zstep = flags.count("zstep") ? parse_double(prog, "zstep", flags.at("zstep")) : 0.0;
+  }
+  else{
+    args.zmax = parse_double(prog, "zmax", require("zmax"));
+    args.zstep = parse_double(prog, "zstep", require("zstep"));
+  }
   args.col = require("col");
-  args.b = parse_double(prog, "b", require("b"));
+  if(args.col == "pA"){
+    args.b = parse_double(prog, "b", require("b"));
+  }
+  else{
+    // Impact parameter, only used for --col pA (Sr_0's nucleus branch and
+    // the BK-nucleus grid file lookup, both gated on rp.col=="pA" -- see
+    // dipole_amplitude.cpp) -- optional otherwise (e.g. --col pp).
+    args.b = flags.count("b") ? parse_double(prog, "b", flags.at("b")) : 0.0;
+  }
   args.incoming = require("incoming");
   args.outgoing = require("outgoing");
   args.rc = require("rc");
-  args.p = parse_double(prog, "p", require("p"));
+  args.pt = parse_double(prog, "pt", require("pt"));
   args.muratio = parse_double(prog, "muratio", require("muratio"));
   if(flags.count("sqrts")) args.sqrts = parse_double(prog, "sqrts", flags.at("sqrts"));
   if(flags.count("y")) args.y = parse_double(prog, "y", flags.at("y"));
@@ -141,12 +168,6 @@ Args parse(int argc, char* argv[]){
     double sigma02 = parse_double(prog, "sigma02", flags.at("sigma02"));
     if(sigma02_is_mb) sigma02 /= params::GeV2_to_mb;  // mb -> GeV^-2
     args.sigma0 = 2.0*sigma02;
-  }
-  if(flags.count("level")){
-    args.level = flags.at("level");
-    if(args.level != "parton" && args.level != "hadron"){
-      usage_error(prog, "--level must be 'parton' or 'hadron', got '" + args.level + "'");
-    }
   }
   if(flags.count("ff-set")) args.ff_set = flags.at("ff-set");
   if(flags.count("pdf-set")) args.pdf_set = flags.at("pdf-set");
@@ -159,7 +180,7 @@ Args parse(int argc, char* argv[]){
 
   // Reject unknown flags (typos) rather than silently ignoring them.
   static const vector<string> known = {"zmin", "zmax", "zstep", "col", "b",
-    "incoming", "outgoing", "rc", "p", "muratio", "sqrts", "y",
+    "incoming", "outgoing", "rc", "pt", "muratio", "sqrts", "y",
     "bk-proton", "bk-nucleus", "sigma02", "level", "ff-set", "z-points",
     "pdf-set"};
   for(const auto& [name, value] : flags){

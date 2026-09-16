@@ -13,7 +13,7 @@
 //
 //   sigma_LO/NLO(p_h) = \int_{zmin}^{1} dz/z^2 * ff.zD(rp,z,rp.mu2_ff)
 //                          * sigma_LO/NLO_k(rp, pdf, ..., k=p_h/z, xp(z))
-//
+// 
 // xp(z)/xg(z) are recomputed at each z from k=p_h/z the same way main.cpp's
 // parton-level loop computes them from k=p/z (Eqs. 5-6), which is why
 // sqrts/y (not otherwise part of RunParameters) are taken as explicit
@@ -36,6 +36,8 @@ struct HadronSigma{
   double NLO;
 };
 
+// Returns dN / d^2 p_h dy. To get the cross section, in pp collisions  this should be multiplied by params::sigma0/2
+// in pA, one should instead perform the d^2b integral (which in pp case is replaced by \int d^2b -> simga_0/2)
 HadronSigma sigma_hadron_ph(const params::RunParameters& rp, const PdfSet& pdf, const FfSet& ff,
                              const DipoleAmplitude& dipole, double p_h, double zmin,
                              double sqrts, double y, int n_zpoints);
