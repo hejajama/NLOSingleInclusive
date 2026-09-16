@@ -20,9 +20,9 @@ public:
   // z*D(z,Q^2) for rp.outgoing fragmenting into the set's hadron.
   // rp.outgoing=="g" reads the gluon fragmentation function directly;
   // rp.outgoing=="q" sums the fragmentation functions of all Nf light
-  // quark AND antiquark flavors (params::Nf), since -- unlike rp.incoming
-  // on the PdfSet side -- rp.outgoing never names a specific flavor (see
-  // cli.hpp/params.cpp: outgoing is just "g" or "q").
+  // quark AND antiquark flavors (params::Nf), since rp.outgoing never
+  // names a specific flavor (see cli.hpp/params.cpp: outgoing is just "g"
+  // or "q") -- mirrored by PdfSet::xf's rp.incoming=="q" handling.
   double zD(const params::RunParameters& rp, double z, double Q2) const;
 
   // The LHAPDF set name this instance was built from -- lets a caller build

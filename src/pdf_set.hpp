@@ -14,7 +14,9 @@ public:
   PdfSet(const PdfSet&) = delete;
   PdfSet& operator=(const PdfSet&) = delete;
 
-  // x*f(x,Q^2) for rp.incoming.
+  // x*f(x,Q^2) for rp.incoming. rp.incoming=="q" sums the PDFs of all Nf
+  // light quark AND antiquark flavors (params::Nf) -- see
+  // docs/pdf_evaluation_bug.md for the history of this branch.
   double xf(const params::RunParameters& rp, double x, double Q2) const;
 
   // The LHAPDF set name this instance was built from -- lets a caller build

@@ -22,15 +22,26 @@ double PdfSet::xf(const RunParameters& rp, double x, double Q2) const{
     // 1: d, -1: dbar
     // 2: u, -2: ubar
     // 3: s, -3: sbar
-    int particle_flag;
     const string &incoming = rp.incoming;
-    if(incoming.compare("g") == 0) particle_flag = 0;
-    else if(incoming.compare("d") == 0) particle_flag = 1;
-    else if(incoming.compare("u") == 0) particle_flag = 2;
-    else if(incoming.compare("s") == 0) particle_flag = 3;
-    else if(incoming.compare("dbar") == 0) particle_flag = -1;
-    else if(incoming.compare("ubar") == 0) particle_flag = -2;
-    else if(incoming.compare("sbar") == 0) particle_flag = -3;
+    if(incoming.compare("g") == 0) return pdf_->xfxQ2(0,x,Q2);
+    if(incoming.compare("d") == 0) return pdf_->xfxQ2(1,x,Q2);
+    if(incoming.compare("u") == 0) return pdf_->xfxQ2(2,x,Q2);
+    if(incoming.compare("s") == 0) return pdf_->xfxQ2(3,x,Q2);
+    if(incoming.compare("dbar") == 0) return pdf_->xfxQ2(-1,x,Q2);
+    if(incoming.compare("ubar") == 0) return pdf_->xfxQ2(-2,x,Q2);
+    if(incoming.compare("sbar") == 0) return pdf_->xfxQ2(-3,x,Q2);
+    if(incoming.compare("q") == 0){
+        // Sum over all Nf light quark AND antiquark flavors (params::Nf),
+        // mirroring FfSet::zD's rp.outgoing=="q" handling -- see
+        // docs/pdf_evaluation_bug.md for why this branch didn't always
+        // exist (it used to fall through with particle_flag uninitialized).
+        double sum = 0;
+        for(int flavor=1; flavor<=Nf; flavor++){
+            sum += pdf_->xfxQ2(flavor,x,Q2) + pdf_->xfxQ2(-flavor,x,Q2);
+        }
+        return sum;
+    }
 
-    return pdf_->xfxQ2(particle_flag,x,Q2);
+    cerr << "Bad rp.incoming= " << incoming << endl;
+    exit(1);
 }
