@@ -7,7 +7,8 @@
 #include <LHAPDF/LHAPDF.h>
 
 // The collinear PDF set used for the incoming/outgoing parton
-// (rp.incoming). Built once per run in main() from params::pdfname.
+// (rp.incoming). Built once per run in main() from --pdf-set (default
+// params::pdfname; see cli.hpp).
 class PdfSet{
 public:
   explicit PdfSet(const std::string& name);

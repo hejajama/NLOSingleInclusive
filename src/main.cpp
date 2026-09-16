@@ -47,7 +47,7 @@ int main(int argc, char* argv[]){
                                                   alpha_s_running, mu2,
                                                   args.bk_proton, args.bk_nucleus, args.sigma0);
 
-    PdfSet pdf(pdfname);
+    PdfSet pdf(args.pdf_set);
     DipoleAmplitude dipole(rp);
     gsl_set_error_handler(&gsl_error_handler);
 

@@ -34,6 +34,9 @@
 //      --ff-set <name> (default "NNFF10_PIsum_nlo"): the LHAPDF
 //        fragmentation-function set used when --level hadron; ignored
 //        for --level parton.
+//      --pdf-set <name> (default params::pdfname): the LHAPDF PDF set used
+//        for the incoming parton (rp.incoming), both --level parton and
+//        --level hadron.
 //      --z-points <n> (default 16, ignored for --level parton): number of
 //        nodes in the fixed-order Gauss-Legendre rule used for --level
 //        hadron's z integral (sigma_hadron.hpp) -- deterministic and
@@ -69,6 +72,7 @@ struct Args{
   std::string level;   // "parton" (default) or "hadron"
   std::string ff_set;  // fragmentation-function set name, used only for level=="hadron"
   int z_points;        // Gauss-Legendre node count for level=="hadron"'s z integral (default 16)
+  std::string pdf_set; // incoming PDF set name (default params::pdfname)
 };
 
 // Parses argc/argv as passed to main() (argv[0] is the program name).

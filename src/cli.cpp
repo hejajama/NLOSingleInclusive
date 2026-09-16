@@ -23,7 +23,8 @@ namespace{
        << "      --p <d> --muratio <d> [--sqrts <d>] [--y <d>]\n"
        << "      [--bk-proton <file>] [--bk-nucleus <prefix>]\n"
        << "      [--sigma02 <d> [mb]]\n"
-       << "      [--level <parton|hadron>] [--ff-set <name>] [--z-points <n>]\n\n"
+       << "      [--level <parton|hadron>] [--ff-set <name>] [--z-points <n>]\n"
+       << "      [--pdf-set <name>]\n\n"
        << "Usage (legacy positional, kept for backward compatibility):\n"
        << "  " << prog << " zmin zmax zstep col b incoming outgoing rc p muratio\n";
   exit(1);
@@ -62,6 +63,7 @@ Args parse(int argc, char* argv[]){
   args.level = "parton";
   args.ff_set = "NNFF10_PIsum_nlo";
   args.z_points = 16;
+  args.pdf_set = params::pdfname;
 
   const bool named = !tokens.empty() && tokens[0].rfind("--", 0) == 0;
 
@@ -147,6 +149,7 @@ Args parse(int argc, char* argv[]){
     }
   }
   if(flags.count("ff-set")) args.ff_set = flags.at("ff-set");
+  if(flags.count("pdf-set")) args.pdf_set = flags.at("pdf-set");
   if(flags.count("z-points")){
     args.z_points = parse_int(prog, "z-points", flags.at("z-points"));
     if(args.z_points < 1){
@@ -157,7 +160,8 @@ Args parse(int argc, char* argv[]){
   // Reject unknown flags (typos) rather than silently ignoring them.
   static const vector<string> known = {"zmin", "zmax", "zstep", "col", "b",
     "incoming", "outgoing", "rc", "p", "muratio", "sqrts", "y",
-    "bk-proton", "bk-nucleus", "sigma02", "level", "ff-set", "z-points"};
+    "bk-proton", "bk-nucleus", "sigma02", "level", "ff-set", "z-points",
+    "pdf-set"};
   for(const auto& [name, value] : flags){
     (void)value;
     if(find(known.begin(), known.end(), name) == known.end()){

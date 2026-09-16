@@ -66,9 +66,12 @@ def build_command(binary, args, incoming, outgoing, p):
         "--zmin", str(args.zmin),
         "--zmax", UNUSED_ZMAX,
         "--zstep", UNUSED_ZSTEP,
-        "--ff-set", args.ff_set,
         "--z-points", str(args.z_points),
     ]
+    if args.ff_set is not None:
+        cmd += ["--ff-set", args.ff_set]
+    if args.pdf_set is not None:
+        cmd += ["--pdf-set", args.pdf_set]
     if args.sqrts is not None:
         cmd += ["--sqrts", str(args.sqrts)]
     if args.y is not None:
@@ -257,8 +260,10 @@ def parse_args():
                      help="--muratio forwarded to nlosingleinclusive")
     ap.add_argument("--zmin", type=float, default=0.4,
                      help="lower bound of the hadron-level z integral (--zmin)")
-    ap.add_argument("--ff-set", default="NNFF10_PIsum_nlo",
-                     help="--ff-set forwarded to nlosingleinclusive")
+    ap.add_argument("--ff-set", default=None,
+                     help="--ff-set forwarded to nlosingleinclusive (default: the binary's own default, NNFF10_PIsum_nlo)")
+    ap.add_argument("--pdf-set", default=None,
+                     help="--pdf-set forwarded to nlosingleinclusive (default: the binary's own default, params::pdfname)")
     ap.add_argument("--sqrts", type=float, default=None,
                      help="--sqrts forwarded to nlosingleinclusive (default: the binary's own default)")
     ap.add_argument("--y", type=float, default=None,
