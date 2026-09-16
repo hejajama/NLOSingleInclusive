@@ -39,6 +39,20 @@ namespace {
     double Sr = ctx.dipole->S(r, ctx.Y);
     return r*gsl_sf_bessel_J0(ctx.k*r)*sigma_LO_r_from_S(*ctx.rp,*ctx.pdf,ctx.xp,Sr);
   }
+
+  // Context for integrand_sigma_LO_k_X0 -- no dipole/Y needed, since Sr_0()
+  // is the closed-form initial condition (Eq. 13/14), independent of xg.
+  struct SigmaLOX0Context{
+    const RunParameters *rp;
+    const PdfSet *pdf;
+    double k;
+    double xp;
+  };
+
+  double integrand_sigma_LO_k_X0(double r, void *userdata){
+    const SigmaLOX0Context &ctx = *static_cast<SigmaLOX0Context*>(userdata);
+    return r*gsl_sf_bessel_J0(ctx.k*r)*sigma_LO_r_from_S(*ctx.rp,*ctx.pdf,ctx.xp,Sr_0(*ctx.rp,r));
+  }
 }
 
 
@@ -47,5 +61,13 @@ double sigma_LO_k(const RunParameters& rp, const PdfSet& pdf, const DipoleAmplit
   SigmaLOContext ctx{&rp, &pdf, &dipole, std::log(1/xg), k, xp};
   double integral, error;
   intdeo(integrand_sigma_LO_k,0,k,epsrel_intde,&integral,&error,&ctx);
+  return integral/(2*M_PI);
+}
+
+
+double sigma_LO_k_X0(const RunParameters& rp, const PdfSet& pdf, double k, double xp){
+  SigmaLOX0Context ctx{&rp, &pdf, k, xp};
+  double integral, error;
+  intdeo(integrand_sigma_LO_k_X0,0,k,epsrel_intde,&integral,&error,&ctx);
   return integral/(2*M_PI);
 }

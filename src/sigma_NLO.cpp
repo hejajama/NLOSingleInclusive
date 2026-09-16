@@ -22,17 +22,18 @@ namespace {
     const PointTables *tables;
     double k;
     double xp;
+    bool include_lo_baseline;
   };
 }
 
 
 double sigma_NLO_r(const RunParameters& rp, const PdfSet& pdf, const PointTables& tables,
-                    double r, double k, double xp){
+                    double r, double k, double xp, bool include_lo_baseline){
   double res = 0;
-  if(rp.channel==Channel::QQ){
+  if(include_lo_baseline && rp.channel==Channel::QQ){
       res += pdf.xf(rp,xp,rp.mu2)*Sr_0(rp,r);
   }
-  if(rp.channel==Channel::GG){
+  if(include_lo_baseline && rp.channel==Channel::GG){
       res += pdf.xf(rp,xp,rp.mu2)*Sq(Sr_0(rp,r));
   }
   double as;
@@ -56,13 +57,13 @@ double sigma_NLO_r(const RunParameters& rp, const PdfSet& pdf, const PointTables
 
 double integrand_sigma_NLO_k(double r, void *userdata){
   const SigmaNLOContext &ctx = *static_cast<SigmaNLOContext*>(userdata);
-  return r*gsl_sf_bessel_J0(ctx.k*r)*sigma_NLO_r(*ctx.rp,*ctx.pdf,*ctx.tables,r,ctx.k,ctx.xp);
+  return r*gsl_sf_bessel_J0(ctx.k*r)*sigma_NLO_r(*ctx.rp,*ctx.pdf,*ctx.tables,r,ctx.k,ctx.xp,ctx.include_lo_baseline);
 }
 
 
 double sigma_NLO_k(const RunParameters& rp, const PdfSet& pdf, const PointTables& tables,
-                    double k, double xp){
-  SigmaNLOContext ctx{&rp, &pdf, &tables, k, xp};
+                    double k, double xp, bool include_lo_baseline){
+  SigmaNLOContext ctx{&rp, &pdf, &tables, k, xp, include_lo_baseline};
   double integral, error;
   intdeo(integrand_sigma_NLO_k,0,k,epsrel_intde,&integral,&error,&ctx);
   return integral/(2*M_PI);

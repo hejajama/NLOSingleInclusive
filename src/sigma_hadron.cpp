@@ -104,7 +104,7 @@ HadronSigma sigma_hadron_ph(const RunParameters& rp, const PdfSet& pdf, const Ff
   // Written one slot per i, then summed serially below in index order --
   // avoids both a shared accumulator and any parallel-reduction reordering,
   // so the result matches the original serial summation exactly.
-  std::vector<double> LO_i(n_zpoints, 0.0), NLO_i(n_zpoints, 0.0);
+  std::vector<double> LO_i(n_zpoints, 0.0), NLO_i(n_zpoints, 0.0), LO_X0_i(n_zpoints, 0.0);
 
   #pragma omp parallel for schedule(dynamic)
   for(int i=0; i<n_zpoints; i++){
@@ -123,19 +123,28 @@ HadronSigma sigma_hadron_ph(const RunParameters& rp, const PdfSet& pdf, const Ff
 
     // LO only ever needs S(r,Y) (sigma_LO.cpp), never PointTables' NLO
     // coefficient/xi-convolution tables, so it skips PointTables entirely.
+    // Kept for reference/diagnostics -- see HadronSigma::LO's doc comment.
     LO_i[i] = jacobian*D*sigma_LO_k(rp, tpdf, dipole, xg, k, xp);
+
+    // The paper's own LO curve (Eq. 7a/7b at X0, sigma_LO_k_X0's doc
+    // comment) -- closed-form, no dipole/BK grid needed.
+    LO_X0_i[i] = jacobian*D*sigma_LO_k_X0(rp, tpdf, k, xp);
 
     // NLO does need the full PointTables, built once here and reused for
     // nothing else -- each Gauss-Legendre node is independent by
-    // construction, so there's nothing to cache across them.
+    // construction, so there's nothing to cache across them. Only the
+    // xi-convolution correction is requested here (include_lo_baseline=
+    // false); the X0 baseline is added back in explicitly below via
+    // LO_X0_i, instead of being folded in twice.
     PointTables tables(rp, tpdf, dipole, xp, xg, k);
-    NLO_i[i] = jacobian*D*sigma_NLO_k(rp, tpdf, tables, k, xp);
+    NLO_i[i] = jacobian*D*sigma_NLO_k(rp, tpdf, tables, k, xp, /*include_lo_baseline=*/false);
   }
 
-  HadronSigma result{0, 0};
+  HadronSigma result{0, 0, 0};
   for(int i=0; i<n_zpoints; i++){
     result.LO += LO_i[i];
-    result.NLO += NLO_i[i];
+    result.LO_X0 += LO_X0_i[i];
+    result.NLO += NLO_i[i] + LO_X0_i[i];
   }
 
   gsl_integration_glfixed_table_free(table);

@@ -126,6 +126,35 @@ only to this mode:
 | `--pdf-set` *(optional)* | LHAPDF PDF set for the incoming parton (default `params::pdfname`); also usable with `--level parton` |
 | `--z-points` *(optional)* | Gauss-Legendre node count for the z integral (default 16; see the validation note in [src/sigma_hadron.cpp](src/sigma_hadron.cpp)) |
 
+### Output
+
+A single CSV line (plus header):
+
+```
+pT [GeV],dN_LO(x_g) / d^2p_Tdy [1/GeV^2],dN_NLO / d^2p_Tdy [1/GeV^2],dN_LO(X0) / d^2p_Tdy [1/GeV^2]
+```
+
+(the header instead reads `d sigma_LO(x_g) / ...`, `d sigma_NLO / ...`,
+`d sigma_LO(X0) / ...` in `[1/GeV^4]` for `--col pp`, where the output is
+already multiplied by `sigma0/2`.) The three value columns are:
+
+- `LO(x_g)` -- `sigma_LO_k` (Eq. 7a/7b), with the dipole amplitude
+  BK-evolved to `Xg` (Eq. 5). This does **not** match how the paper itself
+  defines the LO curve (see `LO(X0)` below) -- kept only for
+  reference/diagnostics.
+- `NLO` -- the full NLO-accuracy result: the `xi`-convolution correction
+  (Eqs. 9/11a-11c) plus `LO(X0)`. This is the paper's own NLO curve.
+- `LO(X0)` -- Eq. 7a/7b evaluated at the dipole's initial-condition scale
+  `X0` (Eq. 13/14), exactly as the paper's text specifies right before
+  Eq. (7a)/(7b): *"dipole amplitudes in the LO term are evaluated at the
+  initial scale, X0, of the small-x evolution"* -- the rapidity evolution
+  down to `Xg` only enters through the NLO `xi`-convolution's `X(xi)`
+  (Eq. 4). This is the paper's own LO curve.
+
+See [src/sigma_hadron.hpp](src/sigma_hadron.hpp)'s `HadronSigma` and
+[src/sigma_LO.hpp](src/sigma_LO.hpp)'s `sigma_LO_k`/`sigma_LO_k_X0` for
+the corresponding code.
+
 ### Hadron-level flavor sums
 
 `--incoming q` and `--outgoing q` each sum the corresponding PDF/FF over

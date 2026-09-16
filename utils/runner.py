@@ -3,7 +3,12 @@
 
 Runs `nlosingleinclusive --level hadron` once per (channel, p_T) pair, saves
 each channel's p_T scan to its own file under --tmp-dir, then combines all
-channels into a single p_T,LO_total,NLO_total file (--output).
+channels into a single p_T,LO_total,NLO_total,LO_X0_total file (--output).
+LO is sigma_LO_k (dipole BK-evolved to Xg, kept for reference/diagnostics),
+NLO is the full NLO total (xi-convolution correction plus the X0-frozen LO
+baseline), and LO_X0 is that baseline on its own -- the paper's own LO
+curve (Eq. 7a/7b evaluated at X0; see ../src/sigma_LO.hpp and
+../README.md's "Output"/"Hadron-level cross section" sections).
 
 "All channels" means gg, gq, qg (using the aggregate incoming/outgoing=="q"
 token -- PdfSet::xf/FfSet::zD sum every light quark+antiquark flavor
@@ -124,8 +129,13 @@ def build_command(binary, args, incoming, outgoing, p):
 
 
 def run_one(args, incoming, outgoing, p):
-    """Runs one (channel, p_T) point. Returns (p_h, LO, NLO), or None (with
-    a warning printed) if the run failed or its output couldn't be parsed."""
+    """Runs one (channel, p_T) point. Returns (p_h, LO, NLO, LO_X0), or None
+    (with a warning printed) if the run failed or its output couldn't be
+    parsed. LO is sigma_LO_k (dipole BK-evolved to Xg, kept for reference),
+    NLO is the full NLO total (xi-convolution correction + the X0-frozen LO
+    baseline), and LO_X0 is that X0 baseline on its own -- the paper's own
+    LO curve (Eq. 7a/7b at X0; see src/sigma_LO.hpp's sigma_LO_k_X0 doc
+    comment and README.md's "Output"/"Hadron-level cross section" sections)."""
     cmd = build_command(args.binary, args, incoming, outgoing, p)
     label = channel_label(incoming, outgoing)
     env = os.environ.copy()
@@ -152,13 +162,13 @@ def run_one(args, incoming, outgoing, p):
         return None
 
     try:
-        p_h, lo, nlo = (float(x) for x in lines[-1].split(","))
+        p_h, lo, nlo, lo_x0 = (float(x) for x in lines[-1].split(","))
     except ValueError:
         log(f"Warning: channel {label} at p_T={p} produced unparsable "
             f"output ({lines[-1]!r}); skipping this point")
         return None
 
-    return p_h, lo, nlo
+    return p_h, lo, nlo, lo_x0
 
 
 def pt_values(pt_min, pt_max, pt_step):
@@ -173,7 +183,7 @@ def pt_values(pt_min, pt_max, pt_step):
 def run_channels(args, pts, channels):
     """Runs every (channel, p_T) point, up to --max-runners at a time, then
     writes each channel's results to its own file under --tmp-dir. Returns
-    {label: {p_T: (LO, NLO)}}."""
+    {label: {p_T: (LO, NLO, LO_X0)}}."""
     os.makedirs(args.tmp_dir, exist_ok=True)
     channel_data = {label: {} for label in
                     (channel_label(i, o) for i, o in channels)}
@@ -191,9 +201,9 @@ def run_channels(args, pts, channels):
             point = future.result()
             if point is None:
                 continue
-            p_h, lo, nlo = point
-            channel_data[label][p] = (lo, nlo)
-            log(f"[{label}] p_T={p} done (LO={lo:.6g}, NLO={nlo:.6g})")
+            p_h, lo, nlo, lo_x0 = point
+            channel_data[label][p] = (lo, nlo, lo_x0)
+            log(f"[{label}] p_T={p} done (LO={lo:.6g}, NLO={nlo:.6g}, LO_X0={lo_x0:.6g})")
 
     for incoming, outgoing in channels:
         label = channel_label(incoming, outgoing)
@@ -202,13 +212,13 @@ def run_channels(args, pts, channels):
 
         with open(channel_file, "w", newline="") as f:
             writer = csv.writer(f)
-            writer.writerow(["p_T", "LO", "NLO"])
+            writer.writerow(["p_T", "LO", "NLO", "LO_X0"])
             for p in pts:
                 point = channel_data[label].get(p)
                 if point is None:
                     continue
-                lo, nlo = point
-                writer.writerow([p, lo, nlo])
+                lo, nlo, lo_x0 = point
+                writer.writerow([p, lo, nlo, lo_x0])
                 n_ok += 1
 
         log(f"Channel {label}: {n_ok}/{len(pts)} p_T points succeeded "
@@ -223,10 +233,11 @@ def run_channels(args, pts, channels):
 def combine(args, pts, channel_data, channels):
     with open(args.output, "w", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow(["p_T", "LO_total", "NLO_total", "channels_missing"])
+        writer.writerow(["p_T", "LO_total", "NLO_total", "LO_X0_total", "channels_missing"])
         for p in pts:
             lo_sum = 0.0
             nlo_sum = 0.0
+            lo_x0_sum = 0.0
             missing = []
             for incoming, outgoing in channels:
                 label = channel_label(incoming, outgoing)
@@ -234,16 +245,17 @@ def combine(args, pts, channel_data, channels):
                 if point is None:
                     missing.append(label)
                     continue
-                lo, nlo = point
+                lo, nlo, lo_x0 = point
                 lo_sum += lo
                 nlo_sum += nlo
+                lo_x0_sum += lo_x0
 
             if missing:
                 log(f"Warning: p_T={p} total is missing channel(s) "
-                    f"{', '.join(missing)} -- LO_total/NLO_total for this "
-                    "point are incomplete")
+                    f"{', '.join(missing)} -- LO_total/NLO_total/LO_X0_total "
+                    "for this point are incomplete")
 
-            writer.writerow([p, lo_sum, nlo_sum, ";".join(missing)])
+            writer.writerow([p, lo_sum, nlo_sum, lo_x0_sum, ";".join(missing)])
 
     log(f"Combined spectrum written to {args.output}")
 

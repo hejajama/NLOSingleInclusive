@@ -75,18 +75,19 @@ int main(int argc, char* argv[]){
         FfSet ff(args.ff_set);
         double p_h = args.pt;
         HadronSigma sigma = sigma_hadron_ph(rp, pdf, ff, dipole, p_h, args.zmin, args.sqrts, args.y, args.z_points);
-        // in pp case, multiply by sigma0/2 to get the cross section 
+        // in pp case, multiply by sigma0/2 to get the cross section
         if (args.col == "pp") {
             sigma.LO *= rp.sigma0/2.0;
             sigma.NLO *= rp.sigma0/2.0;
-            cout << "pT [GeV],d sigma_LO / d^2p_Tdy [1/GeV^4],d sigma_NLO / d^2p_Tdy [1/GeV^4]" << endl;
+            sigma.LO_X0 *= rp.sigma0/2.0;
+            cout << "pT [GeV],d sigma_LO(x_g) / d^2p_Tdy [1/GeV^4],d sigma_NLO / d^2p_Tdy [1/GeV^4],d sigma_LO(X0) / d^2p_Tdy [1/GeV^4]" << endl;
         }
-        else 
+        else
         {
-            cout << "pT [GeV],dN_LO / d^2p_Tdy [1/GeV^2],dN_NLO / d^2p_Tdy [1/GeV^2]" << endl;
+            cout << "pT [GeV],dN_LO(x_g) / d^2p_Tdy [1/GeV^2],dN_NLO / d^2p_Tdy [1/GeV^2],dN_LO(X0) / d^2p_Tdy [1/GeV^2]" << endl;
         }
 
-      cout << p_h << "," << sigma.LO << "," << sigma.NLO << endl;
+      cout << p_h << "," << sigma.LO << "," << sigma.NLO << "," << sigma.LO_X0 << endl;
     }
 
     return 0;
