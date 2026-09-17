@@ -37,9 +37,12 @@ namespace params{
   // KCBK first  bal+sd solution
   //inline const std::string bksolpp = "./dipole-kcbk-hera-bal+sd-4.61.dip";
 
-  // KCBK fit3 solution
-  inline const std::string bksolpp = "./KCBK_fit_3/proton.dat";
-  inline const std::string bksolpA = "./KCBK_fit_3/Pb_b_";
+  // KCBK fit3 solution -- bksolpA (below) is kept from this fit3 grid
+  // since KCBK parent (the active bksolpp below) has no pA solution;
+  // --col pA is already broken regardless (see
+  // tests/regression/README.md, "Known gap: no pA case").
+  //inline const std::string bksolpp = "./KCBK_fit_3/proton.dat";
+  inline const std::string bksolpA = "./bksolutions/KCBK_fit_3/Pb_b_";
   // NOTE: Qs02/gamm/ec used to be hand-set here per BK-fit choice (see git
   // history). They're now read straight out of bksolpp's/bk_proton's own
   // "# Initial condition: ..." header comment -- see
@@ -49,20 +52,24 @@ namespace params{
   //
   // Fallback values read_initial_condition_header() uses (with a warning)
   // for whichever of Q_s0^2/\gamma/the E-log coefficient it can't find in
-  // a given file's header -- the same KCBK fit3 values these used to be
-  // hand-set to above before that reader existed. If the BK-fit choice
-  // above is changed away from KCBK fit3, prefer pointing bksolpp/
-  // --bk-proton at a file with a proper header over relying on these.
-  inline constexpr double default_Qs02 = 0.0680;
-  inline constexpr double default_gamm = 1.21;
+  // a given file's header. The active bksolpp below (KCBK parent, the
+  // paper-reference dipole) is a bare grid file with no "# Initial
+  // condition: ..." header comment at all, so these ARE the values in
+  // effect for every run -- they must match that file's actual IC, not
+  // just serve as a fallback. If bksolpp is changed to a file with a
+  // proper header, prefer pointing bksolpp/--bk-proton at that over
+  // relying on these.
+  inline constexpr double default_Qs02 = 0.0833;
+  inline constexpr double default_gamm = 0.98;
   inline constexpr double default_ec = 1.;
 
   // KCBK bal+sd solution
   //inline const std::string bksolpp = "./KCBK_fit_5/proton.dat";
   //inline const std::string bksolpA = "./KCBK_fit_5/Pb_b_";
 
-  // KCBK parent solution
-  //inline const std::string bksolpp = "./KCBK_fit_1/proton.dat";
+  // KCBK parent solution -- the paper-reference dipole amplitude
+  // (arXiv:2310.06640). No nucleus (pA) grid is available for this fit.
+  inline const std::string bksolpp = "./bksolutions/KCBK_fit_1/dipole-kcbk-hera-parent-4.61.dip";
   //inline const std::string bksolpA = "./KCBK_fit_1/Pb_b_";
 
   // ResumBK bal+sd solution
@@ -116,9 +123,9 @@ namespace params{
   inline constexpr double sigma_inel = 179.7733;
   //inline constexpr double sigma0 = 50.2628683108;   // Henri's Au data
   //inline constexpr double sigma0 = 96.6153078;        // ResumBK and old KCBK data
-  inline constexpr double sigma0 = 94.4580282;          // KCBK fit3
+  //inline constexpr double sigma0 = 94.4580282;          // KCBK fit3
   //inline constexpr double sigma0 = 44.5837784;      // KCBK bal+sd
-  //inline constexpr double sigma0 = 50.0283412;        // KCBK parent
+  inline constexpr double sigma0 = 50.0283412;        // KCBK parent
   //inline constexpr double sigma0 = 39.3446708;        // ResumBK parent
   //inline constexpr double sigma0 = 40.320583;      // ResumBK bal+sd
   //inline constexpr double sigma0 = 31.7941922;        // TBK parent (fit1)

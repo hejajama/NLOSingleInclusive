@@ -38,7 +38,11 @@ public:
   DipoleAmplitude(const DipoleAmplitude&) = delete;
   DipoleAmplitude& operator=(const DipoleAmplitude&) = delete;
 
-  // S(r,Y) via bicubic interpolation over the full grid.
+  // S(r,Y) via bicubic interpolation over the full grid. For x>=x0 (Y such
+  // that Y-log(1/x0()) <= 0, i.e. no evolution rapidity has elapsed yet)
+  // returns the analytic IC Sr_0(r) instead of the grid's tabulated Y=0
+  // row, so callers see the exact MV/GBW-like initial condition rather
+  // than its bicubic-spline approximation.
   double S(double r, double Y) const;
 
   // ln(r) integration bounds derived from the grid's r-range, used by the
@@ -79,6 +83,10 @@ private:
   // See the Qs02()/gamma()/ec()/Nf() getters above.
   double qs02_ = 0, gamma_ = 0, ec_ = 0;
   int nf_ = 0;
+
+  // Kept so S() can fall back to the analytic IC Sr_0() (below) for
+  // x>=x0 -- see S()'s implementation.
+  params::RunParameters rp_;
 
   Spline2D spline_;
 

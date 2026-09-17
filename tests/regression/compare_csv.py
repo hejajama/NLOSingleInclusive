@@ -23,7 +23,10 @@ def load_csv(path):
             line = line.strip()
             if not line:
                 continue
-            rows.append([float(x) for x in line.split(",")])
+            try:
+                rows.append([float(x) for x in line.split(",")])
+            except ValueError:
+                continue  # header row (e.g. "z,k [GeV],...")
     return rows
 
 

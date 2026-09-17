@@ -99,7 +99,7 @@ double Sr_0(const RunParameters& rp, double r){
 }
 
 
-DipoleAmplitude::DipoleAmplitude(const RunParameters& rp){
+DipoleAmplitude::DipoleAmplitude(const RunParameters& rp): rp_(rp){
   vector<vector<double>> Sr;
   vector<double> yvals_tmp;
   load_grid(rp, Sr, yvals_tmp);
@@ -129,12 +129,17 @@ DipoleAmplitude::DipoleAmplitude(const RunParameters& rp){
 double DipoleAmplitude::S(double r, double Y) const{
   if(r<minr_) return 1;
   if(r>maxr_) return 0;
+  double y = Y - std::log(1/x0_);
+  // x>=x0 (no evolution rapidity elapsed yet): return the analytic IC
+  // directly rather than the grid's tabulated Y=0 row, since Sr_0() is
+  // exact there while the bicubic spline only approximates it.
+  if(y <= 0.0) return Sr_0(rp_, r);
   // The bicubic spline can overshoot slightly (interpolation ripple) even
   // though S itself is a probability and must stay in [0,1] -- clamp rather
   // than let that leak into callers (e.g. sigma_LO.cpp squares this for the
   // gluon channel, where a tiny negative value is otherwise harmless but a
   // tiny >1 value is not).
-  double s = spline_.eval(r, max(0.0, Y-std::log(1/x0_)));
+  double s = spline_.eval(r, y);
   return clamp(s, 0.0, 1.0);
 }
 
