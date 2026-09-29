@@ -17,15 +17,18 @@ namespace{
 [[noreturn]] void usage_error(const string& prog, const string& message){
   cerr << "Error: " << message << "\n\n"
        << "Usage (named flags):\n"
-       << "  " << prog << " --zmin <d> --col <pp|pA>\n"
+       << "  " << prog << " --col <pp|pA>\n"
        << "      --incoming <g|q|u|d|s|ubar|dbar|sbar> --outgoing <g|q|u|d|s|ubar|dbar|sbar>\n"
-       << "      --rc <fixed|mom|parent|daughter|smallest|mixed|mixedbd>\n"
+       << "      [--rc <fixed|mom|parent|daughter|smallest|mixed|mixedbd>] "
+          "(default mom)\n"
        << "      --pt <d> --muratio <d> [--sqrts <d>] [--y <d>]\n"
        << "      [--bk-proton <file>] [--bk-nucleus <prefix>]\n"
        << "      [--sigma02 <d> [mb]]\n"
-       << "      [--level <parton|hadron>] [--ff-set <name>] [--z-points <n>]\n"
+       << "      [--level <parton|hadron>] (default hadron)\n"
+       << "      [--ff-set <name>] [--z-points <n>]\n"
        << "      [--pdf-set <name>]\n"
-       << "      --zmax <d> --zstep <d> (both required unless --level hadron)\n"
+       << "      [--zmin <d>] [--zmax <d>] [--zstep <d>] "
+          "(default 0.05, 0.95, 0.1)\n"
        << "      --b <d> (required for --col pA; ignored/optional otherwise)\n\n"
        << "Usage (legacy positional, kept for backward compatibility):\n"
        << "  " << prog << " zmin zmax zstep col b incoming outgoing rc p muratio\n";
@@ -62,7 +65,7 @@ Args parse(int argc, char* argv[]){
   args.bk_proton = "";
   args.bk_nucleus = "";
   args.sigma0 = params::sigma0;
-  args.level = "parton";
+  args.level = "hadron";
   args.ff_set = params::default_ffname;
   args.z_points = 16;
   args.pdf_set = params::pdfname;
@@ -125,7 +128,6 @@ Args parse(int argc, char* argv[]){
     return it->second;
   };
 
-  // Parsed first: --zmax/--zstep's requiredness below depends on it.
   if(flags.count("level")){
     args.level = flags.at("level");
     if(args.level != "parton" && args.level != "hadron"){
@@ -133,18 +135,13 @@ Args parse(int argc, char* argv[]){
     }
   }
 
-  args.zmin = parse_double(prog, "zmin", require("zmin"));
-  if(args.level == "hadron"){
-    // Unused by --level hadron (its z integral only uses --zmin; see
-    // sigma_hadron.hpp) -- optional there, unlike --level parton where
-    // they drive the z sweep in main.cpp.
-    args.zmax = flags.count("zmax") ? parse_double(prog, "zmax", flags.at("zmax")) : 0.0;
-    args.zstep = flags.count("zstep") ? parse_double(prog, "zstep", flags.at("zstep")) : 0.0;
-  }
-  else{
-    args.zmax = parse_double(prog, "zmax", require("zmax"));
-    args.zstep = parse_double(prog, "zstep", require("zstep"));
-  }
+  // zmin/zmax/zstep are all optional, defaulting to a standard z sweep
+  // (0.05 to 0.95 in steps of 0.1). Unused by --level hadron (its z
+  // integral only uses --zmin; see sigma_hadron.hpp) -- for --level parton
+  // they drive the z sweep in main.cpp.
+  args.zmin = flags.count("zmin") ? parse_double(prog, "zmin", flags.at("zmin")) : 0.05;
+  args.zmax = flags.count("zmax") ? parse_double(prog, "zmax", flags.at("zmax")) : 0.95;
+  args.zstep = flags.count("zstep") ? parse_double(prog, "zstep", flags.at("zstep")) : 0.1;
   args.col = require("col");
   if(args.col == "pA"){
     args.b = parse_double(prog, "b", require("b"));
@@ -157,7 +154,7 @@ Args parse(int argc, char* argv[]){
   }
   args.incoming = require("incoming");
   args.outgoing = require("outgoing");
-  args.rc = require("rc");
+  args.rc = flags.count("rc") ? flags.at("rc") : "mom";
   args.pt = parse_double(prog, "pt", require("pt"));
   args.muratio = parse_double(prog, "muratio", require("muratio"));
   if(flags.count("sqrts")) args.sqrts = parse_double(prog, "sqrts", flags.at("sqrts"));
