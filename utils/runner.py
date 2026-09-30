@@ -155,6 +155,10 @@ def run_one(args, incoming, outgoing, p):
             f"{result.stderr.strip()}")
         return None
 
+    if result.stderr.strip():
+        log(f"Warning: channel {label} at p_T={p} printed to stderr:\n"
+            f"{result.stderr.strip()}")
+
     lines = [line for line in result.stdout.strip().splitlines() if line.strip()]
     if not lines:
         log(f"Warning: channel {label} at p_T={p} produced no output; "

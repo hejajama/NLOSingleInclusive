@@ -36,9 +36,7 @@ struct HadronSigma{
                    // reference/diagnostics -- not what the paper's own
                    // Eq. 7a/7b specifies, see sigma_LO_k_X0's doc comment).
   double NLO;      // Full NLO total: the xi-convolution correction
-                   // (Eq. 9/11a-c) plus the X0-frozen LO baseline (Eq.
-                   // 7a/7b), i.e. LO_X0 + the correction -- this is what
-                   // the paper's own NLO curve is.
+                   // (Eq. 9/11a-c)
   double LO_X0;    // sigma_LO_k_X0: Eq. 7a/7b evaluated at X0, as the
                    // paper's own LO curve actually is.
 };

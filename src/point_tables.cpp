@@ -60,16 +60,16 @@ PointTables::PointTables(const RunParameters& rp, const PdfSet& pdf,
 }
 
 
-double PointTables::I2(double r, double y) const{ return coeff_splines_[kI2].eval(r, max(y, y_floor_)); }
-double PointTables::J(double r, double y) const{ return coeff_splines_[kJ].eval(r, max(y, y_floor_)); }
-double PointTables::K1(double r, double y) const{ return coeff_splines_[kK1].eval(r, max(y, y_floor_)); }
-double PointTables::H2(double r, double y) const{ return coeff_splines_[kH2].eval(r, max(y, y_floor_)); }
-double PointTables::H3(double r, double y) const{ return coeff_splines_[kH3].eval(r, max(y, y_floor_)); }
-double PointTables::H4(double r, double y) const{ return coeff_splines_[kH4].eval(r, max(y, y_floor_)); }
-double PointTables::K2(double r, double y) const{ return coeff_splines_[kK2].eval(r, max(y, y_floor_)); }
-double PointTables::Jv(double r, double y) const{ return coeff_splines_[kJv].eval(r, max(y, y_floor_)); }
-double PointTables::Jv2(double r, double y) const{ return coeff_splines_[kJv2].eval(r, max(y, y_floor_)); }
-double PointTables::JJv_xi1(double r, double y) const{ return coeff_splines_[kJJv_xi1].eval(r, max(y, y_floor_)); }
+double PointTables::I2(double r, double y) const{ return coeff_splines_[kI2].eval(r, clamp(y, y_floor_, y_ceiling_)); }
+double PointTables::J(double r, double y) const{ return coeff_splines_[kJ].eval(r, clamp(y, y_floor_, y_ceiling_)); }
+double PointTables::K1(double r, double y) const{ return coeff_splines_[kK1].eval(r, clamp(y, y_floor_, y_ceiling_)); }
+double PointTables::H2(double r, double y) const{ return coeff_splines_[kH2].eval(r, clamp(y, y_floor_, y_ceiling_)); }
+double PointTables::H3(double r, double y) const{ return coeff_splines_[kH3].eval(r, clamp(y, y_floor_, y_ceiling_)); }
+double PointTables::H4(double r, double y) const{ return coeff_splines_[kH4].eval(r, clamp(y, y_floor_, y_ceiling_)); }
+double PointTables::K2(double r, double y) const{ return coeff_splines_[kK2].eval(r, clamp(y, y_floor_, y_ceiling_)); }
+double PointTables::Jv(double r, double y) const{ return coeff_splines_[kJv].eval(r, clamp(y, y_floor_, y_ceiling_)); }
+double PointTables::Jv2(double r, double y) const{ return coeff_splines_[kJv2].eval(r, clamp(y, y_floor_, y_ceiling_)); }
+double PointTables::JJv_xi1(double r, double y) const{ return coeff_splines_[kJJv_xi1].eval(r, clamp(y, y_floor_, y_ceiling_)); }
 
 
 double PointTables::xi_convolution(double r) const{
@@ -95,6 +95,7 @@ void PointTables::build_coefficient_tables(const RunParameters& rp, const Dipole
   for(int i=0; i<realypoints; i++){
     yvals_tmp[i]=min(yvals[i]+y_floor_,yg);
   }
+  y_ceiling_ = yvals_tmp.back();
 
   int rpoints = dipole.r_points();
   const vector<double> &rvals = dipole.r_values();

@@ -55,6 +55,11 @@ private:
   double minr_, maxr_;   // for xi_convolution()'s bounds clamp
   double y_floor_;       // log(1/dipole.x0()): floor applied to y before
                          // evaluating any coefficient-function spline
+  double y_ceiling_;     // yvals_tmp.back() from build_coefficient_tables():
+                         // ceiling applied to y before evaluating any
+                         // coefficient-function spline
+                         // avoids out-of-domain errors from interpolation due to 
+                         // numerical rounding errors
   std::array<Spline2D, kNumCoeffs> coeff_splines_;
   Spline1D xi_conv_spline_;
 

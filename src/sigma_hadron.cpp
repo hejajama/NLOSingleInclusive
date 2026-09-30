@@ -138,6 +138,10 @@ HadronSigma sigma_hadron_ph(const RunParameters& rp, const PdfSet& pdf, const Ff
     // LO_X0_i, instead of being folded in twice.
     PointTables tables(rp, tpdf, dipole, xp, xg, k);
     NLO_i[i] = jacobian*D*sigma_NLO_k(rp, tpdf, tables, k, xp, /*include_lo_baseline=*/false);
+
+    if (NLO_i[i] < 0) {
+        std::cerr << "Warning: pt = " << p_h << " NLO contribution is negative at z=" << z << ", k=" << k << ", xp=" << xp << std::endl;
+    }
   }
 
   HadronSigma result{0, 0, 0};

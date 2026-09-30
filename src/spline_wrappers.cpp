@@ -57,7 +57,9 @@ double Spline2D::eval(double r, double y) const{
   if(r < interp->xmin || r > interp->xmax || y < interp->ymin || y > interp->ymax){
     cerr << "# Warning: Spline2D::eval called outside interpolation domain: "
          << "r=" << r << " (range [" << interp->xmin << ", " << interp->xmax << "]), "
-         << "y=" << y << " (range [" << interp->ymin << ", " << interp->ymax << "])" << endl;
+         << "y=" << y << " (range [" << interp->ymin << ", " << interp->ymax << "])" 
+         << ", returning 0.0" << endl;
+    return 0.0;
   }
 
   return gsl_spline2d_eval(spline_, r, y, xacc.p, yacc.p);

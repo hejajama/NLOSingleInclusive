@@ -35,8 +35,38 @@ Note that $16.6708$ is $7.66 \mathrm{mb}$ from Table II of [arXiv:2007.01645](ht
 * This particular example uses 10 threads to compute different pt's and channels simultaneously
 
 The computed cross section multiplied by $A=208$ should be close to the p+A curve in the original paper (Fig. 2). At the moment there is some mismatch, we get a somewhat smaller normalization as illustrated in the figure below
+
 ![Resumbk fit 1 comparison](docs/figures/resumbk1spectra_fit_1.png)
 
+Plot code is something like this
+
+```python
+    d=pd.read_csv(datafile, comment="#")
+    lhcb = pd.read_csv("data/LHCb_2204.10608_pPb_pi0_forward-2.csv", comment="#")
+
+    if scale_factor != 1.0:
+        label =rf"{label} ( $\times {scale_factor}$)"
+
+    plt.plot(
+        d["p_T"],
+        scale_factor * (d["NLO_total"] + d["LO_X0_total"]) * 2.0 * np.pi * d["p_T"] * 0.389379 * 208,
+        label=label,
+        linestyle=style
+    )
+
+    if plot_data:
+
+        plt.errorbar(lhcb["pT_center_GeV"], lhcb["dsigma_dpT_mb_per_GeV"],
+                 yerr=(lhcb["stat_unc_mb_per_GeV"]**2+lhcb["syst_unc_mb_per_GeV"]**2)**0.5,
+                 fmt="o",
+                 label="LHCb p-Pb 8.16 TeV, forward (2.5<eta<3.5)"
+        )
+
+
+    plt.yscale("log")
+    plt.xlabel("p_T [GeV]")
+    plt.ylabel("d sigma / dp_T [mb]")
+```
 
 ### Note on fragmentation functions
 

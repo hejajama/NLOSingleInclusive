@@ -65,9 +65,8 @@ double FfSet::eval(const LHAPDF::PDF& ff, const RunParameters& rp, double z, dou
     if(outgoing.compare("q") == 0){
         // Sum over all Nf light quark AND antiquark flavors (params::Nf),
         // mirroring PdfSet::xf's rp.incoming=="q" handling. Only valid to
-        // combine with a *single* explicit incoming flavor (or
-        // rp.incoming=="g"/rp.channel!=QQ) -- see the rp.incoming=="q" &&
-        // rp.outgoing=="q" rejection in sigma_hadron.cpp for why summing
+        // combine with incoming gluon channel (rp.incoming=="g") 
+        // see the rp.incoming!="q" rejection in sigma_hadron.cpp for why summing
         // both sides at once is wrong for the QQ channel.
         double sum = 0;
         for(int flavor=1; flavor<=Nf; flavor++){
