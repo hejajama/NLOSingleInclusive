@@ -74,6 +74,11 @@ Args parse(int argc, char* argv[]){
 
   if(!named){
     // Legacy positional form: zmin zmax zstep col b incoming outgoing rc p muratio
+    // Always parton-level: this interface predates --level and its
+    // required zmin/zmax/zstep only make sense as a parton-level z sweep
+    // (see main.cpp) -- it must not pick up the named-flag form's hadron
+    // default.
+    args.level = "parton";
     if(tokens.size() != 10){
       usage_error(prog, "expected 10 positional arguments (zmin zmax zstep "
                          "col b incoming outgoing rc p muratio), got " +
