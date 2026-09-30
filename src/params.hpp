@@ -26,22 +26,10 @@ enum class Channel { QQ, QG, GQ, GG };
 // graph: C++17 inline variables let every translation unit share exactly
 // one definition without a separate params.cpp.
 namespace params{
-  // First Pb BK solution
-  //inline const std::string bksolpA = "./Pb/Pb_smallest_b_";
-  //inline const std::string bksolpp = "./Pb/proton_resumbk_fit1_smallest";
-
-  // KCBK fit1 solution
-  //inline const std::string bksolpA = "./kcbk_fit1_sigma0_18.81mb/Pb_smallest_b_";
-  //inline const std::string bksolpp = "./kcbk_fit1_sigma0_18.81mb/p_smallest";
-
-  // KCBK first  bal+sd solution
-  //inline const std::string bksolpp = "./dipole-kcbk-hera-bal+sd-4.61.dip";
-
-  // KCBK fit3 solution -- bksolpA (below) is kept from this fit3 grid
-  // since KCBK parent (the active bksolpp below) has no pA solution;
-  // --col pA is already broken regardless (see
-  // tests/regression/README.md, "Known gap: no pA case").
-  //inline const std::string bksolpp = "./KCBK_fit_3/proton.dat";
+  
+  // Default prefix for the BK solution file for a nucleus (pA) run. 
+  // The actual file used is this prefix plus the impact parameter (b) value, 
+  // e.g. "./bksolutions/KCBK_fit_3/Pb_b_5" for b=5. 
   inline const std::string bksolpA = "./bksolutions/KCBK_fit_3/Pb_b_";
   // NOTE: Qs02/gamm/ec used to be hand-set here per BK-fit choice (see git
   // history). They're now read straight out of bksolpp's/bk_proton's own

@@ -1,4 +1,7 @@
 #include "spline_wrappers.hpp"
+#include <iostream>
+using std::cerr;
+using std::endl;
 
 namespace{
 // One accelerator per thread per axis, not per spline instance: GSL
@@ -49,5 +52,13 @@ void Spline2D::build(const double *rvals, const double *yvals){
 
 double Spline2D::eval(double r, double y) const{
   thread_local AccelGuard xacc, yacc;
+
+  const gsl_interp2d *interp = &spline_->interp_object;
+  if(r < interp->xmin || r > interp->xmax || y < interp->ymin || y > interp->ymax){
+    cerr << "# Warning: Spline2D::eval called outside interpolation domain: "
+         << "r=" << r << " (range [" << interp->xmin << ", " << interp->xmax << "]), "
+         << "y=" << y << " (range [" << interp->ymin << ", " << interp->ymax << "])" << endl;
+  }
+
   return gsl_spline2d_eval(spline_, r, y, xacc.p, yacc.p);
 }

@@ -323,9 +323,9 @@ def parse_args():
                           "meaningful, and required by the binary, for --col pA -- omit "
                           "it for the default --col pp)")
     ap.add_argument("--rc", default="mom", help="--rc forwarded to nlosingleinclusive")
-    ap.add_argument("--muratio", type=float, default=1.0,
+    ap.add_argument("--muratio", type=float, default=4.0,
                      help="--muratio forwarded to nlosingleinclusive")
-    ap.add_argument("--zmin", type=float, default=0.4,
+    ap.add_argument("--zmin", type=float, default=0.05,
                      help="lower bound of the hadron-level z integral (--zmin)")
     ap.add_argument("--ff-set", default=None,
                      help="--ff-set forwarded to nlosingleinclusive (default: the binary's "
@@ -342,7 +342,7 @@ def parse_args():
                      help="--sigma02 forwarded to nlosingleinclusive (GeV^-2)")
     ap.add_argument("--timeout", type=float, default=1800,
                      help="per-(channel, p_T) run timeout, in seconds")
-    ap.add_argument("--negative_to_zero", action="store_true",
+    ap.add_argument("--negative-to-zero", action="store_true",
                      help="clamp each channel's LO/NLO/LO_X0 value to zero before adding "
                           "it into LO_total/NLO_total/LO_X0_total, instead of letting "
                           "negative channel contributions partially cancel positive ones")
@@ -355,6 +355,10 @@ def main():
     if args.pi0 and args.ff_set is None:
         args.ff_set = DEFAULT_PI0_FF_SET
         log(f"--pi0 given without --ff-set: defaulting --ff-set to {DEFAULT_PI0_FF_SET}")
+
+    if not args.sigma02 and args.col=="pp":
+        log("Warning: --col pp without --sigma02: the binary's own default will be used, "
+            "which may not match the BK-evolved dipole's actual sigma0 (see README.md)")
 
     channels = channels_for(args)
     pts = pt_values(args.pt_min, args.pt_max, args.pt_step)
