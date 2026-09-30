@@ -1,0 +1,34 @@
+# LHCb p+Pb -> pi0 + X differential cross section, forward region
+# Rapidity: 2.5 < eta_cm < 3.5 (proton-going direction)
+# sqrt(sNN) = 8.16 TeV
+# Source: arXiv:2204.10608 (Phys. Rev. Lett. 131, 042302 (2023)), LHCb-PAPER-2021-053
+#         Figure 2, lower panel, black filled circles (p-Pb data)
+# Extraction method: PyMuPDF vector graphics digitization from PDF (Fig. 2, page 8)
+#   - Axis calibration verified against 8 x-axis ticks (pT=2–9 GeV) and 4 y-axis ticks
+#   - Coordinate transforms: log-scale on both axes
+#   - Stat uncertainty: height of inner vertical error bar (1-sigma)
+#   - Syst uncertainty: half-height of outer box
+# Units: mb/GeV for cross section and uncertainties
+# Note: pT bin centers are arithmetic midpoints of each bin
+pT_low_GeV,pT_high_GeV,pT_center_GeV,dsigma_dpT_mb_per_GeV,stat_unc_mb_per_GeV,syst_unc_mb_per_GeV
+1.5,1.6,1.55,1391,15.7,128.7
+1.6,1.7,1.65,1104,13.0,99.8
+1.7,1.8,1.75,873,10.5,61.9
+1.8,1.9,1.85,704,8.9,48.7
+1.9,2.0,1.95,583,7.8,41.4
+2.0,2.2,2.10,421,4.2,29.2
+2.2,2.4,2.30,299,3.4,20.3
+2.4,2.6,2.50,208,2.6,11.3
+2.6,2.8,2.70,147,2.1,9.9
+2.8,3.0,2.90,107,1.7,7.0
+3.0,3.2,3.10,80.5,1.41,5.47
+3.2,3.4,3.30,61.9,1.22,4.21
+3.4,3.6,3.50,46.1,1.01,3.30
+3.6,3.8,3.70,37.0,0.92,2.67
+3.8,4.0,3.90,27.4,0.75,1.92
+4.0,4.5,4.25,19.3,0.41,1.39
+4.5,5.0,4.75,10.62,0.282,0.804
+5.0,5.5,5.25,6.947,0.244,0.581
+5.5,6.0,5.75,3.999,0.169,0.337
+6.0,8.0,7.00,1.859,0.067,0.192
+8.0,10.0,9.00,0.497,0.036,0.054
