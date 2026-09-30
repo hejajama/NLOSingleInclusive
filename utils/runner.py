@@ -246,6 +246,10 @@ def combine(args, pts, channel_data, channels):
                     missing.append(label)
                     continue
                 lo, nlo, lo_x0 = point
+                if args.negative_to_zero:
+                    lo = max(lo, 0.0)
+                    nlo = max(nlo, 0.0)
+                    lo_x0 = max(lo_x0, 0.0)
                 lo_sum += lo
                 nlo_sum += nlo
                 lo_x0_sum += lo_x0
@@ -338,6 +342,10 @@ def parse_args():
                      help="--sigma02 forwarded to nlosingleinclusive (GeV^-2)")
     ap.add_argument("--timeout", type=float, default=1800,
                      help="per-(channel, p_T) run timeout, in seconds")
+    ap.add_argument("--negative_to_zero", action="store_true",
+                     help="clamp each channel's LO/NLO/LO_X0 value to zero before adding "
+                          "it into LO_total/NLO_total/LO_X0_total, instead of letting "
+                          "negative channel contributions partially cancel positive ones")
 
     return ap.parse_args()
 
